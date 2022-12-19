@@ -21,32 +21,42 @@ function getFullInfoAboutDevice() {
   const appVersion = navigator.appVersion;
   const userAgent = navigator.userAgent;
   const pdfViewerEnabled = navigator.pdfViewerEnabled;
+  const appCodeName = navigator.appCodeName;
+  const product = navigator.product;
+  const currentBrowserBuildNumber = navigator.productSub;
   const screenFrame = screenFrameBackup;
 
   console.log(navigator);
   return {
-    screenResolution,
-    screenColorDepth,
-    timezone,
-    osCpu,
-    colorGamut,
-    contrastPreferences,
-    cookiesEnabled,
-    appName,
-    appVersion,
-    languages,
-    userAgent,
-    pdfViewerEnabled,
-    osInfo,
-    platform,
-    deviceMemory,
-    deviceColorsForced,
-    hardwareConcurrency,
-    usingHDR,
-    screenFrame,
-    colorsInverted,
-    touchSupport
-  };
+    constants: {
+      timezone,
+      product,
+      appName,
+      appCodeName,
+      platform,
+      deviceMemory,
+      touchSupport,
+      osInfo,
+      osCpu,
+      hardwareConcurrency,
+      screenFrame,
+      screenColorDepth,
+      colorGamut,
+    },
+    changedParams: {
+      screenResolution,
+      currentBrowserBuildNumber,
+      contrastPreferences,
+      cookiesEnabled,
+      languages,
+      userAgent,
+      pdfViewerEnabled,
+      deviceColorsForced,
+      usingHDR,
+      colorsInverted,
+      appVersion,
+    }
+  }
 }
 
 function getColorDepth() {
