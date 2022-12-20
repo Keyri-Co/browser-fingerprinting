@@ -15,6 +15,7 @@ function getFullInfoAboutDevice() {
   const screenResolution = getScreenResolution();
   const timezone = getTimezone();
   const touchSupport = JSON.stringify(getTouchSupport());
+  const gpu = JSON.stringify(getVideoCardInfo());
 
   const navigator = getNavigatorValues();
   const appName = navigator.appName;
@@ -25,10 +26,11 @@ function getFullInfoAboutDevice() {
   const product = navigator.product;
   const currentBrowserBuildNumber = navigator.productSub;
   const screenFrame = screenFrameBackup;
+  const connection = JSON.stringify(navigator.connection);
 
-  console.log(navigator);
   return {
     constants: {
+      gpu,
       timezone,
       product,
       appName,
@@ -55,8 +57,25 @@ function getFullInfoAboutDevice() {
       usingHDR,
       colorsInverted,
       appVersion,
+      connection,
     }
   }
+}
+
+function getVideoCardInfo() {
+  const gl = document.createElement('canvas').getContext('webgl');
+  if (!gl) {
+    return {
+      error: "no webgl",
+    };
+  }
+  const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+  return debugInfo ? {
+    vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
+    renderer:  gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL),
+  } : {
+    error: "no WEBGL_debug_renderer_info",
+  };
 }
 
 function getColorDepth() {

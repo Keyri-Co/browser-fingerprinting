@@ -16,20 +16,20 @@
     <h3 class="title">Changable info</h3>
     <ul id="changed_info"></ul>
     <script>
-      const result = getFullInfoAboutDevice();
+      const deviceInfo = getFullInfoAboutDevice();
 
       const constantsBox = document.getElementById('constants_info');
-      Object.keys(result.constants).forEach(key => {
+      Object.keys(deviceInfo.constants).forEach(key => {
         const listElem = document.createElement('li');
-        const text = document.createTextNode(`${key}: ${result.constants[key]}`);
+        const text = document.createTextNode(`${key}: ${deviceInfo.constants[key]}`);
         listElem.appendChild(text);
         constantsBox.appendChild(listElem);
       })
 
       const changedInfoBox = document.getElementById('changed_info');
-      Object.keys(result.changedParams).forEach(key => {
+      Object.keys(deviceInfo.changedParams).forEach(key => {
         const listElem = document.createElement('li');
-        const text = document.createTextNode(`${key}: ${result.changedParams[key]}`);
+        const text = document.createTextNode(`${key}: ${deviceInfo.changedParams[key]}`);
         listElem.appendChild(text);
         changedInfoBox.appendChild(listElem);
       })
