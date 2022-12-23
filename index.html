@@ -10,29 +10,67 @@
     <title>Document</title>
 </head>
 <body>
-    <h2 class="title">Info about device</h2>
-    <h3 class="title">Constants</h3>
-    <ul id="constants_info"></ul>
-    <h3 class="title">Changable info</h3>
-    <ul id="changed_info"></ul>
-    <script>
-      const deviceInfo = getFullInfoAboutDevice();
+<h2 class="title">Info about device</h2>
+<h3 class="title">Constants</h3>
+<ul id="constants_info"></ul>
+<h3 class="title">Changable info</h3>
+<ul id="changed_info"></ul>
 
-      const constantsBox = document.getElementById('constants_info');
-      Object.keys(deviceInfo.constants).forEach(key => {
-        const listElem = document.createElement('li');
-        const text = document.createTextNode(`${key}: ${deviceInfo.constants[key]}`);
-        listElem.appendChild(text);
-        constantsBox.appendChild(listElem);
-      })
+<div class="user_data">
+    <h3>Fingerprint Data</h3>
+    <h5 id="user_exists"></h5>
+    <h5 id="user_name"></h5>
+    <div id="add-new-user-block" style="display: none">
+        Add new user with name: <input type="text" id="name">
+        <button id="add-new-user">Add</button>
+    </div>
+</div>
 
-      const changedInfoBox = document.getElementById('changed_info');
-      Object.keys(deviceInfo.changedParams).forEach(key => {
-        const listElem = document.createElement('li');
-        const text = document.createTextNode(`${key}: ${deviceInfo.changedParams[key]}`);
-        listElem.appendChild(text);
-        changedInfoBox.appendChild(listElem);
-      })
-    </script>
+<script>
+  const deviceInfo = getFullInfoAboutDevice();
+
+  function setExistUserData(data) {
+    const addNewUserBlock = document.getElementById('add-new-user-block');
+    if (!data || !data.name) {
+      addNewUserBlock.style.display = 'block';
+      return;
+    }
+    if (!!data.name) {
+      const userNameBlock = document.getElementById('user_name');
+      userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
+      addNewUserBlock.style.display = 'none';
+    }
+    const userExistBlock = document.getElementById('user_exists');
+    userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
+    return data;
+  }
+
+  document.getElementById('add-new-user').addEventListener('click', async () => {
+    const input = document.getElementById('name').value;
+    if (!input) alert('Input correct name');
+    const result = await addFingerprintUser(deviceInfo, input);
+    setExistUserData(result.data);
+  })
+
+  const constantsBox = document.getElementById('constants_info');
+  Object.keys(deviceInfo.constants).forEach(key => {
+    const listElem = document.createElement('li');
+    const text = document.createTextNode(`${key}: ${deviceInfo.constants[key]}`);
+    listElem.appendChild(text);
+    constantsBox.appendChild(listElem);
+  })
+
+  const changedInfoBox = document.getElementById('changed_info');
+  Object.keys(deviceInfo.changedParams).forEach(key => {
+    const listElem = document.createElement('li');
+    const text = document.createTextNode(`${key}: ${deviceInfo.changedParams[key]}`);
+    listElem.appendChild(text);
+    changedInfoBox.appendChild(listElem);
+  })
+
+  getFingerprintData(deviceInfo).then(async ({data}) => {
+    return setExistUserData(data);
+  })
+</script>
 </body>
 </html>

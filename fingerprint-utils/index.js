@@ -72,7 +72,7 @@ function getVideoCardInfo() {
   const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
   return debugInfo ? {
     vendor: gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL),
-    renderer:  gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL),
+    renderer: gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL),
   } : {
     error: "no WEBGL_debug_renderer_info",
   };
@@ -274,7 +274,7 @@ function getOsCpu() {
 
 function getPlatform() {
   // Android Chrome 86 and 87 and Android Firefox 80 and 84 don't mock the platform value when desktop mode is requested
-  const { platform } = navigator
+  const {platform} = navigator
 
   // iOS mocks the platform value when desktop version is requested: https://github.com/fingerprintjs/fingerprintjs/issues/514
   // iPad uses desktop mode by default since iOS 13
@@ -347,6 +347,7 @@ function isIPad() {
 let screenFrameBackup;
 let screenFrameSizeTimeoutId;
 const screenFrameCheckInterval = 2500;
+
 function watchScreenFrame() {
   if (screenFrameSizeTimeoutId !== undefined) {
     return;
@@ -362,6 +363,7 @@ function watchScreenFrame() {
   }
   checkScreenFrame();
 }
+
 watchScreenFrame();
 
 function getCurrentScreenFrame() {
@@ -452,4 +454,58 @@ function getTouchSupport() {
     touchEvent,
     touchStart,
   }
+}
+
+async function getFingerprintData(deviceInfo) {
+  const fingerprintData = await fetch('http://localhost:8000/fingerprint/me', {
+    method: 'GET', headers: {
+      accept: 'application/json',
+      gpuvendor: JSON.parse(deviceInfo.constants.gpu).vendor,
+      gpurenderer: JSON.parse(deviceInfo.constants.gpu).renderer,
+      timezone: deviceInfo.constants.timezone,
+      product: deviceInfo.constants.product,
+      appname: deviceInfo.constants.appName,
+      appcodename: deviceInfo.constants.appCodeName,
+      platform: deviceInfo.constants.platform,
+      devicememory: deviceInfo.constants.deviceMemory,
+      maxtouchpoints: JSON.parse(deviceInfo.constants.touchSupport).maxTouchPoints,
+      osinfo: deviceInfo.constants.osInfo,
+      oscpu: deviceInfo.constants.osCpu,
+      hardwareconcurrency: deviceInfo.constants.hardwareConcurrency,
+      screenframe: deviceInfo.constants.screenFrame,
+      screencolordepth: deviceInfo.constants.screenColorDepth,
+      colorgamut: deviceInfo.constants.colorGamut,
+    }
+  });
+
+  return fingerprintData.json();
+}
+
+async function addFingerprintUser(deviceInfo, name) {
+  const fingerprintData = await fetch('http://localhost:8000/fingerprint/new-user', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      name: name,
+      gpuvendor: JSON.parse(deviceInfo.constants.gpu).vendor,
+      gpurenderer: JSON.parse(deviceInfo.constants.gpu).renderer,
+      timezone: deviceInfo.constants.timezone,
+      product: deviceInfo.constants.product,
+      appname: deviceInfo.constants.appName,
+      appcodename: deviceInfo.constants.appCodeName,
+      platform: deviceInfo.constants.platform,
+      devicememory: deviceInfo.constants.deviceMemory.toString(),
+      maxtouchpoints: JSON.parse(deviceInfo.constants.touchSupport).maxTouchPoints.toString(),
+      osinfo: deviceInfo.constants.osInfo,
+      oscpu: deviceInfo.constants.osCpu || 'undefined',
+      hardwareconcurrency: deviceInfo.constants.hardwareConcurrency.toString(),
+      screenframe: deviceInfo.constants.screenFrame.toString(),
+      screencolordepth: deviceInfo.constants.screenColorDepth.toString(),
+      colorgamut: deviceInfo.constants.colorGamut,
+    })
+  });
+
+  return fingerprintData.json();
 }

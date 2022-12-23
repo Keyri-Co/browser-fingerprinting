@@ -30,3 +30,8 @@ ul > li:nth-child(odd) {
 ul > li:nth-child(even) {
     border-right: 1px solid #000;
 }
+
+.user_data {
+    margin: 0 20px;
+    padding: 10px 0px;
+}
