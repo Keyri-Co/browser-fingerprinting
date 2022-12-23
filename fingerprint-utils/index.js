@@ -457,7 +457,7 @@ function getTouchSupport() {
 }
 
 async function getFingerprintData(deviceInfo) {
-  const fingerprintData = await fetch('http://localhost:8000/fingerprint/me', {
+  const fingerprintData = await fetch('https://dev-api.keyri.co/fingerprint/me', {
     method: 'GET', headers: {
       accept: 'application/json',
       gpuvendor: JSON.parse(deviceInfo.constants.gpu).vendor,
@@ -482,7 +482,7 @@ async function getFingerprintData(deviceInfo) {
 }
 
 async function addFingerprintUser(deviceInfo, name) {
-  const fingerprintData = await fetch('http://localhost:8000/fingerprint/new-user', {
+  const fingerprintData = await fetch('https://dev-api.keyri.co/fingerprint/new-user', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
