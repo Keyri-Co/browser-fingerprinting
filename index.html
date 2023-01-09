@@ -27,7 +27,9 @@
 </div>
 
 <script>
-  const deviceInfo = getFullInfoAboutDevice();
+  const device = new Device();
+
+  console.log(device);
 
   function setExistUserData(data) {
     const addNewUserBlock = document.getElementById('add-new-user-block');
@@ -48,27 +50,26 @@
   document.getElementById('add-new-user').addEventListener('click', async () => {
     const input = document.getElementById('name').value;
     if (!input) alert('Input correct name');
-    const result = await addFingerprintUser(deviceInfo, input);
+    const result = await addFingerprintUser(device, input);
     setExistUserData(result.data);
   })
 
-  const constantsBox = document.getElementById('constants_info');
-  Object.keys(deviceInfo.constants).forEach(key => {
-    const listElem = document.createElement('li');
-    const text = document.createTextNode(`${key}: ${deviceInfo.constants[key]}`);
-    listElem.appendChild(text);
-    constantsBox.appendChild(listElem);
-  })
+  function printListIntoHTML (objectList, elem) {
+    const elemBox = document.getElementById(elem);
+    Object.keys(objectList).forEach(key => {
+      const listElem = document.createElement('li');
+      const text = document.createTextNode(`${key}: ${objectList[key]}`);
+      listElem.appendChild(text);
+      elemBox.appendChild(listElem);
+    })
+  }
+  const constants = device.getConstants();
+  printListIntoHTML(constants, 'constants_info');
 
-  const changedInfoBox = document.getElementById('changed_info');
-  Object.keys(deviceInfo.changedParams).forEach(key => {
-    const listElem = document.createElement('li');
-    const text = document.createTextNode(`${key}: ${deviceInfo.changedParams[key]}`);
-    listElem.appendChild(text);
-    changedInfoBox.appendChild(listElem);
-  })
+  const changedParams = device.getChangedParams();
+  printListIntoHTML(changedParams, 'changed_info');
 
-  getFingerprintData(deviceInfo).then(async ({data}) => {
+  getFingerprintData(device).then(async ({data}) => {
     return setExistUserData(data);
   })
 </script>
