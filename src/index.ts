@@ -1,4 +1,4 @@
-import * as crypto from 'crypto';
+import CryptoJS from "crypto-js";
 
 interface IGetVideoCardInfo {
   vendor?: string;
@@ -54,7 +54,7 @@ export class Device {
   screenFrame: string = this.unknownStringValue;
   connection: string = this.unknownStringValue;
   constructor() {
-    this.crypto = crypto;
+    this.crypto = CryptoJS;
 
     const isScriptRunnedInBrowser = isBrowser();
     if (!isScriptRunnedInBrowser) return;
@@ -95,7 +95,7 @@ export class Device {
 
   createFingerprintHash(includeChangeableVariables: boolean = false): string {
     const hashObject = JSON.stringify(includeChangeableVariables ? { ...this.getConstants(), ...this.getChangedParams() } : { ...this.getConstants() });
-    const hash = crypto.createHash('md5').update(hashObject).digest('hex'); // if we will need use encrypt functions - we can easily use CryptoJS library
+    const hash = this.crypto.MD5(hashObject);
     return hash;
   }
 
