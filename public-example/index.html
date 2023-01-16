@@ -1,77 +1,124 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <link rel="stylesheet" href="styles.css">
-    <script src="../src/index.ts"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    <link rel="stylesheet" href="styles.css" />
+    <script src="index.js"></script>
     <title>Document</title>
-</head>
-<body>
-<h2 class="title">Info about device</h2>
-<h3 class="title">Constants</h3>
-<ul id="constants_info"></ul>
-<h3 class="title">Changable info</h3>
-<ul id="changed_info"></ul>
+  </head>
+  <body>
+    <h2 class="title">Info about device</h2>
+    <h3 class="title">Constants</h3>
+    <ul id="constants_info"></ul>
+    <h3 class="title">Changable info</h3>
+    <ul id="changed_info"></ul>
 
-<div class="user_data">
-    <h3>Fingerprint Data</h3>
-    <h5 id="user_exists"></h5>
-    <h5 id="user_name"></h5>
-    <div id="add-new-user-block" style="display: none">
-        Add new user with name: <input type="text" id="name">
+    <div class="user_data">
+      <h3>Fingerprint Data</h3>
+      <h5 id="user_exists"></h5>
+      <h5 id="user_name"></h5>
+      <div id="add-new-user-block" style="display: none">
+        Add new user with name: <input type="text" id="name" />
         <button id="add-new-user">Add</button>
+      </div>
     </div>
-</div>
 
-<script>
-  const device = new Device();
+    <script>
+      const localBaseURL = 'http://localhost:8000';
+      const devBaseURL = 'https://dev-api.keyri.co';
+      const environments = {
+        local: 'LOCAL',
+        development: 'DEVELOPMENT',
+      }
+      const currentEnv = environments.development;
+      let baseUrl;
 
-  console.log(device);
+      switch (currentEnv) {
+        case environments.local:
+          baseUrl = localBaseURL;
+          break;
+        case environments.development:
+          baseUrl = devBaseURL;
+          break
+        default:
+          baseUrl = localBaseURL;
+      }
 
-  function setExistUserData(data) {
-    const addNewUserBlock = document.getElementById('add-new-user-block');
-    if (!data || !data.name) {
-      addNewUserBlock.style.display = 'block';
-      return;
-    }
-    if (!!data.name) {
-      const userNameBlock = document.getElementById('user_name');
-      userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
-      addNewUserBlock.style.display = 'none';
-    }
-    const userExistBlock = document.getElementById('user_exists');
-    userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
-    return data;
-  }
+      const device = new Device();
+      const deviceFingerPrint = device.createFingerprintHash();
 
-  document.getElementById('add-new-user').addEventListener('click', async () => {
-    const input = document.getElementById('name').value;
-    if (!input) alert('Input correct name');
-    const result = await addFingerprintUser(device, input);
-    setExistUserData(result.data);
-  })
+      function printListIntoHTML(objectList, elem) {
+        const elemBox = document.getElementById(elem);
+        Object.keys(objectList).forEach((key) => {
+          const listElem = document.createElement('li');
+          const text = document.createTextNode(`${key}: ${objectList[key]}`);
+          listElem.appendChild(text);
+          elemBox.appendChild(listElem);
+        });
+      }
+      const constants = device.getConstants();
+      printListIntoHTML(constants, 'constants_info');
+      const changedParams = device.getChangedParams();
+      printListIntoHTML(changedParams, 'changed_info');
 
-  function printListIntoHTML (objectList, elem) {
-    const elemBox = document.getElementById(elem);
-    Object.keys(objectList).forEach(key => {
-      const listElem = document.createElement('li');
-      const text = document.createTextNode(`${key}: ${objectList[key]}`);
-      listElem.appendChild(text);
-      elemBox.appendChild(listElem);
-    })
-  }
-  const constants = device.getConstants();
-  printListIntoHTML(constants, 'constants_info');
+      function setExistUserData(data) {
+        const addNewUserBlock = document.getElementById('add-new-user-block');
+        if (!data || !data.name) {
+          addNewUserBlock.style.display = 'block';
+          return;
+        }
+        if (!!data.name) {
+          const userNameBlock = document.getElementById('user_name');
+          userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
+          addNewUserBlock.style.display = 'none';
+        }
+        const userExistBlock = document.getElementById('user_exists');
+        userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
+        return data;
+      }
 
-  const changedParams = device.getChangedParams();
-  printListIntoHTML(changedParams, 'changed_info');
+      async function getFingerprintData(deviceHash) {
+        const fingerprintData = await fetch(`${baseUrl}/fingerprint/me`, {
+          method: 'GET',
+          headers: {
+            accept: 'application/json',
+            deviceHash,
+          },
+        });
 
-  getFingerprintData(device).then(async ({data}) => {
-    return setExistUserData(data);
-  })
-</script>
-</body>
+        return fingerprintData.json();
+      }
+
+      async function addFingerprintUser(device, name) {
+        const deviceParams = device.getConstants();
+        const deviceHash = device.createFingerprintHash();
+        const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-user`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            deviceHash,
+            name,
+            deviceParams,
+          }),
+        });
+
+        return fingerprintData.json();
+      }
+
+      document.getElementById('add-new-user').addEventListener('click', async () => {
+        const input = document.getElementById('name').value;
+        if (!input) alert('Input correct name');
+        const result = await addFingerprintUser(device, input);
+        setExistUserData(result.data);
+      });
+
+      getFingerprintData(deviceFingerPrint).then(async ({ data }) => {
+        return setExistUserData(data);
+      });
+    </script>
+  </body>
 </html>

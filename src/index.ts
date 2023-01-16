@@ -1,3 +1,4 @@
+import * as crypto from 'crypto';
 
 interface IGetVideoCardInfo {
   vendor?: string;
@@ -16,8 +17,8 @@ enum ContrastPreference {
   ForcedColors = 10,
 }
 
-const isBrowser = new Function("try {return this===window;}catch(e){ return false;}");
-const isNode = new Function("try {return this===global;}catch(e){return false;}");
+const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
+const isNode = new Function('try {return this===global;}catch(e){return false;}');
 
 export class Device {
   private crypto: any;
@@ -53,11 +54,10 @@ export class Device {
   screenFrame: string = this.unknownStringValue;
   connection: string = this.unknownStringValue;
   constructor() {
+    this.crypto = crypto;
+
     const isScriptRunnedInBrowser = isBrowser();
-
     if (!isScriptRunnedInBrowser) return;
-    this.crypto = window.crypto || (window as any).msCrypto;
-
     this.watchScreenFrame();
 
     this.screenColorDepth = this.paramToString(this.getColorDepth());
@@ -94,20 +94,23 @@ export class Device {
   }
 
   createFingerprintHash(includeChangeableVariables: boolean = false): string {
-    console.log(this.crypto); // TODO: add crypto module for nodeJS and finish hash functions
-    return '';
+    const hashObject = JSON.stringify(includeChangeableVariables ? { ...this.getConstants(), ...this.getChangedParams() } : { ...this.getConstants() });
+    const hash = crypto.createHash('md5').update(hashObject).digest('hex'); // if we will need use encrypt functions - we can easily use CryptoJS library
+    return hash;
   }
 
-  getConstants() {
+  getConstants(): Record<string, string> {
+    if (isNode()) return { environment: 'node-js' };
     return {
-      gpu: this.gpu,
+      gpuVendor: this.gpuVendor,
+      gpuRenderer: this.gpuRenderer,
       timezone: this.timezone,
       product: this.product,
       appName: this.appName,
       appCodeName: this.appCodeName,
       platform: this.platform,
       deviceMemory: this.deviceMemory,
-      touchSupport: this.touchSupport,
+      maxTouchPoints: this.maxTouchPoints,
       osInfo: this.osInfo,
       osCpu: this.osCpu,
       hardwareConcurrency: this.hardwareConcurrency,
@@ -117,7 +120,8 @@ export class Device {
     };
   }
 
-  getChangedParams() {
+  getChangedParams(): Record<string, string> {
+    if (isNode()) return { environment: 'node-js' };
     return {
       screenResolution: this.screenResolution,
       currentBrowserBuildNumber: this.currentBrowserBuildNumber,
@@ -521,62 +525,4 @@ export class Device {
       touchStart,
     };
   }
-}
-
-// TODO: remove from npm package
-async function getFingerprintData(device: Device) {
-  const constants = device.getConstants();
-  const fingerprintData = await fetch('https://dev-api.keyri.co/fingerprint/me', {
-    method: 'GET',
-    headers: {
-      accept: 'application/json',
-      gpuvendor: device.gpuVendor,
-      gpurenderer: device.gpuRenderer,
-      timezone: constants.timezone,
-      product: constants.product,
-      appname: constants.appName,
-      appcodename: constants.appCodeName,
-      platform: constants.platform,
-      devicememory: constants.deviceMemory,
-      maxtouchpoints: device.maxTouchPoints,
-      osinfo: constants.osInfo,
-      oscpu: constants.osCpu,
-      hardwareconcurrency: constants.hardwareConcurrency,
-      screenframe: constants.screenFrame,
-      screencolordepth: constants.screenColorDepth,
-      colorgamut: constants.colorGamut,
-    },
-  });
-
-  return fingerprintData.json();
-}
-
-async function addFingerprintUser(device: Device, name: string) {
-  const constants = device.getConstants();
-  const fingerprintData = await fetch('https://dev-api.keyri.co/fingerprint/new-user', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      name: name,
-      gpuvendor: device.gpuVendor,
-      gpurenderer: device.gpuRenderer,
-      timezone: constants.timezone,
-      product: constants.product,
-      appname: constants.appName,
-      appcodename: constants.appCodeName,
-      platform: constants.platform,
-      devicememory: constants.deviceMemory,
-      maxtouchpoints: device.maxTouchPoints,
-      osinfo: constants.osInfo,
-      oscpu: constants.osCpu,
-      hardwareconcurrency: constants.hardwareConcurrency,
-      screenframe: constants.screenFrame,
-      screencolordepth: constants.screenColorDepth,
-      colorgamut: constants.colorGamut,
-    }),
-  });
-
-  return fingerprintData.json();
 }
