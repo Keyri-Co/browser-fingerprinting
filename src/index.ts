@@ -95,7 +95,7 @@ export class Device {
 
   createFingerprintHash(includeChangeableVariables: boolean = false): string {
     const hashObject = JSON.stringify(includeChangeableVariables ? { ...this.getConstants(), ...this.getChangedParams() } : { ...this.getConstants() });
-    const hash = this.crypto.MD5(hashObject);
+    const hash = this.crypto.MD5(hashObject).toString();
     return hash;
   }
 
