@@ -15,7 +15,6 @@
 
 - Retrieve device data for logging and analytics
 - Create identifier, based on device parameters
-- Separated blocks of information for constant device data and changeable
 
 ## Installing
 
@@ -48,8 +47,9 @@ import { Device } from 'keyri-fingerprint';
 
 const device: Device = new Device();
 
-const deviceMainParams: Record<string, string> = device.getConstants();
-const deviceAdditionalParams: Record<string, string> = device.getChangedParams();
+await device.load(); // load and set params with async loaders
+
+const deviceMainParams: Record<string, string> = device.getMainParams();
 const deviceHash: string = device.createFingerprintHash();
 ```
 
@@ -57,11 +57,11 @@ const deviceHash: string = device.createFingerprintHash();
 
 After you create new `Device` instance you will be able to use next public methods:
 
-| Method                  | Arguments                                               | Return                   | Description                                                                                                |
-| ----------------------- | ------------------------------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------- |
-| createFingerprintHash() | includeChangeableParams: boolean (**default: _false_**) | `string`                 | This method allow create fingerprint hash string based on device params                                    |
-| getConstants()          | -                                                       | `Record<string, string>` | Method return object with device parameter which cannot be changed                                         |
-| getChangedParams()      | -                                                       | `Record<string, string>` | Method return floating device parameters which unsuitable for fingerprinting but can be used for analytics |
+| Method                  | Arguments | Return                   | Description                                                             |
+| ----------------------- | --------- | ------------------------ | ----------------------------------------------------------------------- |
+| async load()            | -         | Promise<`Device`>        | Method load async params and set to `Device`                            |
+| createFingerprintHash() | -         | `string`                 | This method allow create fingerprint hash string based on device params |
+| getMainParams()         | -         | `Record<string, string>` | Method return object with device parameters                             |
 
 ### Responses examples
 
@@ -71,16 +71,21 @@ After you create new `Device` instance you will be able to use next public metho
 import { Device } from 'keyri-fingerprint';
 
 const device: Device = new Device();
+
+await device.load();
+
 const deviceHash = device.createFingerprintHash();
-console.log(deviceHash); // '683277a53901f2e5dda703c852b940d1'
+console.log(deviceHash); // 'de91eb974773aa4937bd9b54d375ecf9'
 ```
 
-#### getConstants()
+#### getMainParams()
 
 ```ts
 import { Device } from 'keyri-fingerprint';
 
 const device: Device = new Device();
+await device.load();
+
 const deviceMainParams: Record<string, string> = device.getConstants();
 
 console.log(JSON.stringify(deviceMainParams));
@@ -100,37 +105,37 @@ console.log(JSON.stringify(deviceMainParams));
   "osInfo": "x86",
   "osCpu": "unknown",
   "hardwareConcurrency": "8",
-  "screenFrame": "25,0,81,0",
+  "screenFrame": "[25,0,84,0]",
   "screenColorDepth": "30",
-  "colorGamut": "rec2020"
-}
-```
-
-#### getChangedParams()
-
-```ts
-import { Device } from 'keyri-fingerprint';
-
-const device: Device = new Device();
-const deviceAdditionalParams: Record<string, string> = device.getChangedParams();
-
-console.log(JSON.stringify(deviceAdditionalParams));
-```
-
-```json
-{
-  "screenResolution": "900,1440",
+  "colorGamut": "rec2020",
   "currentBrowserBuildNumber": "20030107",
+  "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+  "fonts": "[\"Arial Unicode MS\",\"Gill Sans\",\"Helvetica Neue\",\"Menlo\"]",
+  "domBlockers": "unknown",
+  "fontPreferences": "{\"default\":147.5625,\"apple\":147.5625,\"serif\":147.5625}",
+  "screenResolution": "[900,1440]",
   "contrastPreferences": "0",
   "cookiesEnabled": "false",
-  "languages": "ru-RU",
+  "languages": "[[\"ru-RU\"]]",
   "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
   "pdfViewerEnabled": "true",
   "deviceColorsForced": "false",
   "usingHDR": "true",
   "colorsInverted": "unknown",
-  "appVersion": "5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-  "connection": "{}"
+  "connection": "{}",
+  "audioFingerprint": "124.04344968475198",
+  "sessionStorage": "true",
+  "localStorage": "true",
+  "indexedDB": "true",
+  "openDatabase": "true",
+  "cpuClass": "unknown",
+  "plugins": "[{\"name\":\"PDF Viewer\",\"description\":\"Portable Document Format\",\"mimeTypes\":[{\"type\":\"application/pdf\",\"suffixes\":\"pdf\"},{\"type\":\"text/pdf\",\"suffixes\":\"pdf\"}]}]",
+  "canvas": "{\"winding\":true,\"geometry\":\"data:image/png;base64,iVB...\"}",
+  "vendorFlavors": "[\"chrome\"]",
+  "monochromeDepth": "0",
+  "motionReduced": "false",
+  "math": "{\"acos\":1.4473588658278522}",
+  "architecture": "127"
 }
 ```
 
