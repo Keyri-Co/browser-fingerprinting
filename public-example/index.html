@@ -28,7 +28,7 @@
       const environments = {
         local: 'LOCAL',
         development: 'DEVELOPMENT',
-      }
+      };
       const currentEnv = environments.development;
       let baseUrl;
 
@@ -38,87 +38,90 @@
           break;
         case environments.development:
           baseUrl = devBaseURL;
-          break
+          break;
         default:
           baseUrl = localBaseURL;
       }
 
       const device = new Device();
-      device.load().catch(err => {
-        console.error(err.message);
-      }).then(value => {
-        const deviceFingerPrint = device.createFingerprintHash();
+      device
+        .load()
+        .catch((err) => {
+          console.error(err.message);
+        })
+        .then((value) => {
+          const deviceFingerPrint = device.createFingerprintHash();
 
-        function printListIntoHTML(objectList, elem) {
-          const elemBox = document.getElementById(elem);
-          Object.keys(objectList).forEach((key) => {
-            const listElem = document.createElement('li');
-            const text = document.createTextNode(`${key}: ${objectList[key]}`);
-            listElem.appendChild(text);
-            elemBox.appendChild(listElem);
-          });
-        }
-
-        const mainParams = device.getMainParams();
-        printListIntoHTML(mainParams, 'constants_info')
-
-        function setExistUserData(data) {
-          const addNewUserBlock = document.getElementById('add-new-user-block');
-          if (!data || !data.name) {
-            addNewUserBlock.style.display = 'block';
-            return;
+          function printListIntoHTML(objectList, elem) {
+            const elemBox = document.getElementById(elem);
+            Object.keys(objectList).forEach((key) => {
+              const listElem = document.createElement('li');
+              const text = document.createTextNode(`${key}: ${objectList[key]}`);
+              listElem.appendChild(text);
+              elemBox.appendChild(listElem);
+            });
           }
-          if (!!data.name) {
-            const userNameBlock = document.getElementById('user_name');
-            userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
-            addNewUserBlock.style.display = 'none';
+
+          const mainParams = device.getMainParams();
+          printListIntoHTML(mainParams, 'constants_info');
+
+          function setExistUserData(data) {
+            const addNewUserBlock = document.getElementById('add-new-user-block');
+            if (!data || !data.name) {
+              addNewUserBlock.style.display = 'block';
+              return;
+            }
+            if (!!data.name) {
+              const userNameBlock = document.getElementById('user_name');
+              userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
+              addNewUserBlock.style.display = 'none';
+            }
+            const userExistBlock = document.getElementById('user_exists');
+            userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
+            return data;
           }
-          const userExistBlock = document.getElementById('user_exists');
-          userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
-          return data;
-        }
 
-        async function getFingerprintData(deviceHash) {
-          const fingerprintData = await fetch(`${baseUrl}/fingerprint/me`, {
-            method: 'GET',
-            headers: {
-              accept: 'application/json',
-              deviceHash,
-            },
+          async function getFingerprintData(deviceHash) {
+            const fingerprintData = await fetch(`${baseUrl}/fingerprint/me`, {
+              method: 'GET',
+              headers: {
+                accept: 'application/json',
+                deviceHash,
+              },
+            });
+
+            return fingerprintData.json();
+          }
+
+          async function addFingerprintUser(device, name) {
+            const deviceParams = device.getMainParams();
+            const deviceHash = device.createFingerprintHash();
+            const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-user`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                deviceHash,
+                name,
+                deviceParams,
+              }),
+            });
+
+            return fingerprintData.json();
+          }
+
+          document.getElementById('add-new-user').addEventListener('click', async () => {
+            const input = document.getElementById('name').value;
+            if (!input) alert('Input correct name');
+            const result = await addFingerprintUser(device, input);
+            setExistUserData(result.data);
           });
 
-          return fingerprintData.json();
-        }
-
-        async function addFingerprintUser(device, name) {
-          const deviceParams = device.getMainParams();
-          const deviceHash = device.createFingerprintHash();
-          const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-user`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              deviceHash,
-              name,
-              deviceParams,
-            }),
+          getFingerprintData(deviceFingerPrint).then(async ({ data }) => {
+            return setExistUserData(data);
           });
-
-          return fingerprintData.json();
-        }
-
-        document.getElementById('add-new-user').addEventListener('click', async () => {
-          const input = document.getElementById('name').value;
-          if (!input) alert('Input correct name');
-          const result = await addFingerprintUser(device, input);
-          setExistUserData(result.data);
         });
-
-        getFingerprintData(deviceFingerPrint).then(async ({ data }) => {
-          return setExistUserData(data);
-        });
-      })
     </script>
   </body>
 </html>

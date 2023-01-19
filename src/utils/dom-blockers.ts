@@ -1,15 +1,9 @@
-type Filters = Record<string, string[]>
+type Filters = Record<string, string[]>;
 export function getFilters(): Filters {
-  const fromB64 = atob // Just for better minification
+  const fromB64 = atob; // Just for better minification
 
   return {
-    abpIndo: [
-      '#Iklan-Melayang',
-      '#Kolom-Iklan-728',
-      '#SidebarIklan-wrapper',
-      fromB64('YVt0aXRsZT0iN25hZ2EgcG9rZXIiIGld'),
-      '[title="ALIENBOLA" i]',
-    ],
+    abpIndo: ['#Iklan-Melayang', '#Kolom-Iklan-728', '#SidebarIklan-wrapper', fromB64('YVt0aXRsZT0iN25hZ2EgcG9rZXIiIGld'), '[title="ALIENBOLA" i]'],
     abpvn: [
       '#quangcaomb',
       fromB64('Lmlvc0Fkc2lvc0Fkcy1sYXlvdXQ='),
@@ -25,20 +19,8 @@ export function getFilters(): Filters {
       fromB64('YVtocmVmXj0iaHR0cHM6Ly9hcHAucmVhZHBlYWsuY29tL2FkcyJd'),
     ],
     adBlockPersian: ['#navbar_notice_50', '.kadr', 'TABLE[width="140px"]', '#divAgahi', fromB64('I2FkMl9pbmxpbmU=')],
-    adBlockWarningRemoval: [
-      '#adblock-honeypot',
-      '.adblocker-root',
-      '.wp_adblock_detect',
-      fromB64('LmhlYWRlci1ibG9ja2VkLWFk'),
-      fromB64('I2FkX2Jsb2NrZXI='),
-    ],
-    adGuardAnnoyances: [
-      'amp-embed[type="zen"]',
-      '.hs-sosyal',
-      '#cookieconsentdiv',
-      'div[class^="app_gdpr"]',
-      '.as-oil',
-    ],
+    adBlockWarningRemoval: ['#adblock-honeypot', '.adblocker-root', '.wp_adblock_detect', fromB64('LmhlYWRlci1ibG9ja2VkLWFk'), fromB64('I2FkX2Jsb2NrZXI=')],
+    adGuardAnnoyances: ['amp-embed[type="zen"]', '.hs-sosyal', '#cookieconsentdiv', 'div[class^="app_gdpr"]', '.as-oil'],
     adGuardBase: [
       '.BetterJsPopOverlay',
       fromB64('I2FkXzMwMFgyNTA='),
@@ -74,13 +56,7 @@ export function getFilters(): Filters {
       fromB64('LmFkZ29vZ2xl'),
       fromB64('LmFkX3JlZ3VsYXIz'),
     ],
-    adGuardMobile: [
-      fromB64('YW1wLWF1dG8tYWRz'),
-      fromB64('LmFtcF9hZA=='),
-      'amp-embed[type="24smi"]',
-      '#mgid_iframe1',
-      fromB64('I2FkX2ludmlld19hcmVh'),
-    ],
+    adGuardMobile: [fromB64('YW1wLWF1dG8tYWRz'), fromB64('LmFtcF9hZA=='), 'amp-embed[type="24smi"]', '#mgid_iframe1', fromB64('I2FkX2ludmlld19hcmVh')],
     adGuardRussian: [
       fromB64('YVtocmVmXj0iaHR0cHM6Ly9hZC5sZXRtZWFkcy5jb20vIl0='),
       fromB64('LnJlY2xhbWE='),
@@ -95,13 +71,7 @@ export function getFilters(): Filters {
       '#inlineShare',
       '.popup-social',
     ],
-    adGuardSpanishPortuguese: [
-      '#barraPublicidade',
-      '#Publicidade',
-      '#publiEspecial',
-      '#queTooltip',
-      fromB64('W2hyZWZePSJodHRwOi8vYWRzLmdsaXNwYS5jb20vIl0='),
-    ],
+    adGuardSpanishPortuguese: ['#barraPublicidade', '#Publicidade', '#publiEspecial', '#queTooltip', fromB64('W2hyZWZePSJodHRwOi8vYWRzLmdsaXNwYS5jb20vIl0=')],
     adGuardTrackingProtection: [
       '#qoo-counter',
       fromB64('YVtocmVmXj0iaHR0cDovL2NsaWNrLmhvdGxvZy5ydS8iXQ=='),
@@ -116,13 +86,7 @@ export function getFilters(): Filters {
       fromB64('YVtocmVmXj0iaHR0cDovL2l6bGVuemkuY29tL2NhbXBhaWduLyJd'),
       fromB64('YVtocmVmXj0iaHR0cDovL3d3dy5pbnN0YWxsYWRzLm5ldC8iXQ=='),
     ],
-    bulgarian: [
-      fromB64('dGQjZnJlZW5ldF90YWJsZV9hZHM='),
-      '#ea_intext_div',
-      '.lapni-pop-over',
-      '#xenium_hot_offers',
-      fromB64('I25ld0Fk'),
-    ],
+    bulgarian: [fromB64('dGQjZnJlZW5ldF90YWJsZV9hZHM='), '#ea_intext_div', '.lapni-pop-over', '#xenium_hot_offers', fromB64('I25ld0Fk')],
     easyList: [
       fromB64('I0FEX0NPTlRST0xfMjg='),
       fromB64('LnNlY29uZC1wb3N0LWFkcy13cmFwcGVy'),
@@ -137,13 +101,7 @@ export function getFilters(): Filters {
       '#taotaole',
       '#aafoot.top_box',
     ],
-    easyListCookie: [
-      '#AdaCompliance.app-notice',
-      '.text-center.rgpd',
-      '.panel--cookie',
-      '.js-cookies-andromeda',
-      '.elxtr-consent',
-    ],
+    easyListCookie: ['#AdaCompliance.app-notice', '.text-center.rgpd', '.panel--cookie', '.js-cookies-andromeda', '.elxtr-consent'],
     easyListCzechSlovak: [
       '#onlajny-stickers',
       fromB64('I3Jla2xhbW5pLWJveA=='),
@@ -180,13 +138,7 @@ export function getFilters(): Filters {
       fromB64('aW1nW2FsdD0iSG9zdGluZ2FzIFNlcnZlcmlhaS5sdCJd'),
     ],
     estonian: [fromB64('QVtocmVmKj0iaHR0cDovL3BheTRyZXN1bHRzMjQuZXUiXQ==')],
-    fanboyAnnoyances: [
-      '#feedback-tab',
-      '#taboola-below-article',
-      '.feedburnerFeedBlock',
-      '.widget-feedburner-counter',
-      '[title="Subscribe to our blog"]',
-    ],
+    fanboyAnnoyances: ['#feedback-tab', '#taboola-below-article', '.feedburnerFeedBlock', '.widget-feedburner-counter', '[title="Subscribe to our blog"]'],
     fanboyAntiFacebook: ['.util-bar-module-firefly-visible'],
     fanboyEnhancedTrackers: [
       '.open.pushModal',
@@ -195,13 +147,7 @@ export function getFilters(): Filters {
       'div[class$="-hide"][zoompage-fontsize][style="display: block;"]',
       '.BlockNag__Card',
     ],
-    fanboySocial: [
-      '.td-tags-and-social-wrapper-box',
-      '.twitterContainer',
-      '.youtube-social',
-      'a[title^="Like us on Facebook"]',
-      'img[alt^="Share on Digg"]',
-    ],
+    fanboySocial: ['.td-tags-and-social-wrapper-box', '.twitterContainer', '.youtube-social', 'a[title^="Like us on Facebook"]', 'img[alt^="Share on Digg"]'],
     frellwitSwedish: [
       fromB64('YVtocmVmKj0iY2FzaW5vcHJvLnNlIl1bdGFyZ2V0PSJfYmxhbmsiXQ=='),
       fromB64('YVtocmVmKj0iZG9rdG9yLXNlLm9uZWxpbmsubWUiXQ=='),
@@ -216,13 +162,7 @@ export function getFilters(): Filters {
       'DIV.agores300',
       'TABLE.advright',
     ],
-    hungarian: [
-      '#cemp_doboz',
-      '.optimonk-iframe-container',
-      fromB64('LmFkX19tYWlu'),
-      fromB64('W2NsYXNzKj0iR29vZ2xlQWRzIl0='),
-      '#hirdetesek_box',
-    ],
+    hungarian: ['#cemp_doboz', '.optimonk-iframe-container', fromB64('LmFkX19tYWlu'), fromB64('W2NsYXNzKj0iR29vZ2xlQWRzIl0='), '#hirdetesek_box'],
     iDontCareAboutCookies: [
       '.alert-info[data-block-track*="CookieNotice"]',
       '.ModuleTemplateCookieIndicator',
@@ -234,11 +174,11 @@ export function getFilters(): Filters {
     latvian: [
       fromB64(
         'YVtocmVmPSJodHRwOi8vd3d3LnNhbGlkemluaS5sdi8iXVtzdHlsZT0iZGlzcGxheTogYmxvY2s7IHdpZHRoOiAxMjBweDsgaGVpZ2h0O' +
-        'iA0MHB4OyBvdmVyZmxvdzogaGlkZGVuOyBwb3NpdGlvbjogcmVsYXRpdmU7Il0=',
+          'iA0MHB4OyBvdmVyZmxvdzogaGlkZGVuOyBwb3NpdGlvbjogcmVsYXRpdmU7Il0=',
       ),
       fromB64(
         'YVtocmVmPSJodHRwOi8vd3d3LnNhbGlkemluaS5sdi8iXVtzdHlsZT0iZGlzcGxheTogYmxvY2s7IHdpZHRoOiA4OHB4OyBoZWlnaHQ6I' +
-        'DMxcHg7IG92ZXJmbG93OiBoaWRkZW47IHBvc2l0aW9uOiByZWxhdGl2ZTsiXQ==',
+          'DMxcHg7IG92ZXJmbG93OiBoaWRkZW47IHBvc2l0aW9uOiByZWxhdGl2ZTsiXQ==',
       ),
     ],
     listKr: [
@@ -283,19 +223,7 @@ export function getFilters(): Filters {
       '#pgeldiz',
       '.yandex-rtb-block',
     ],
-    thaiAds: [
-      'a[href*=macau-uta-popup]',
-      fromB64('I2Fkcy1nb29nbGUtbWlkZGxlX3JlY3RhbmdsZS1ncm91cA=='),
-      fromB64('LmFkczMwMHM='),
-      '.bumq',
-      '.img-kosana',
-    ],
-    webAnnoyancesUltralist: [
-      '#mod-social-share-2',
-      '#social-tools',
-      fromB64('LmN0cGwtZnVsbGJhbm5lcg=='),
-      '.zergnet-recommend',
-      '.yt.btn-link.btn-md.btn',
-    ],
-  }
+    thaiAds: ['a[href*=macau-uta-popup]', fromB64('I2Fkcy1nb29nbGUtbWlkZGxlX3JlY3RhbmdsZS1ncm91cA=='), fromB64('LmFkczMwMHM='), '.bumq', '.img-kosana'],
+    webAnnoyancesUltralist: ['#mod-social-share-2', '#social-tools', fromB64('LmN0cGwtZnVsbGJhbm5lcg=='), '.zergnet-recommend', '.yt.btn-link.btn-md.btn'],
+  };
 }

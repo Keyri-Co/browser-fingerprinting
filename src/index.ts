@@ -16,7 +16,7 @@ import { canvasToString, doesSupportWinding, isSupported, makeCanvasContext, ren
 import { objectToCanonicalString, paramToString, unknownStringValue as defaultStringValue } from './utils/formaters';
 import { baseFonts, defaultPresetText, fontList, fontsPreferencesPresets, testFontString, textSizeForFontInfo, vendorFlavorKeys } from './utils/constants';
 import { matchGenerator } from './utils/css-helpers';
-import {countTruthy, replaceNaN, toFloat, toInt} from './utils/data';
+import { countTruthy, replaceNaN, toFloat, toInt } from './utils/data';
 import { isAndroid, isChromium, isChromium86OrNewer, isDesktopSafari, isEdgeHTML, isIPad, isTrident, isWebKit, isWebKit606OrNewer } from './utils/browser';
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');

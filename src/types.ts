@@ -37,18 +37,18 @@ export enum InnerErrorName {
 }
 
 export type PluginMimeTypeData = {
-  type: string
-  suffixes: string
-}
+  type: string;
+  suffixes: string;
+};
 
 export type PluginData = {
-  name: string
-  description: string
-  mimeTypes: PluginMimeTypeData[]
-}
+  name: string;
+  description: string;
+  mimeTypes: PluginMimeTypeData[];
+};
 
 export interface CanvasFingerprint {
-  winding: boolean
-  geometry: string
-  text: string
+  winding: boolean;
+  geometry: string;
+  text: string;
 }

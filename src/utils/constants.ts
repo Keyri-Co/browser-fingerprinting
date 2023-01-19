@@ -1,4 +1,4 @@
-import {Preset} from "../types";
+import { Preset } from '../types';
 
 export const vendorFlavorKeys = [
   // Blink and some browsers on iOS

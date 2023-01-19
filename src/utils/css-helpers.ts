@@ -1,4 +1,4 @@
-export function matchGenerator (key: string): Function {
+export function matchGenerator(key: string): Function {
   return (value: string) => {
     return matchMedia(`(${key}: ${value})`).matches;
   };

@@ -135,11 +135,7 @@ export function isAndroid(): boolean {
   // Chrome removes all words "Android" from `navigator` when desktop version is requested
   // Firefox keeps "Android" in `navigator.appVersion` when desktop version is requested
   return (
-    countTruthy([
-      'onorientationchange' in w,
-      'orientation' in w,
-      isItChromium && !('SharedWorker' in w),
-      isItGecko && /android/i.test(navigator.appVersion),
-    ]) >= 2
+    countTruthy(['onorientationchange' in w, 'orientation' in w, isItChromium && !('SharedWorker' in w), isItGecko && /android/i.test(navigator.appVersion)]) >=
+    2
   );
 }
