@@ -42,3 +42,14 @@ export function toInt(value: number | string): number {
   if (typeof value === 'number') return value;
   return parseInt(value);
 }
+
+export function round(value: number, base = 1): number {
+  if (Math.abs(base) >= 1) {
+    return Math.round(value / base) * base
+  } else {
+    // Sometimes when a number is multiplied by a small number, precision is lost,
+    // for example 1234 * 0.0001 === 0.12340000000000001, and it's more precise divide: 1234 / (1 / 0.0001) === 0.1234.
+    const counterBase = 1 / base
+    return Math.round(value * counterBase) / counterBase
+  }
+}

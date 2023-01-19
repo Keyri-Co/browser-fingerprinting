@@ -1,10 +1,11 @@
-import { selectorToElement, withIframe } from './utils/dom';
+import { exitFullscreen, getFullscreenElement, selectorToElement, withIframe } from './utils/dom';
 import { x64hash128 } from './utils/hashing';
 import { getFilters } from './utils/dom-blockers';
 import { MaybePromise, suppressUnhandledRejectionWarning, wait } from './utils/async';
 import {
   CanvasFingerprint,
   ContrastPreference,
+  FrameSize,
   IGetTouchSupport,
   IGetVideoCardInfo,
   InnerErrorName,
@@ -16,7 +17,7 @@ import { canvasToString, doesSupportWinding, isSupported, makeCanvasContext, ren
 import { objectToCanonicalString, paramToString, unknownStringValue as defaultStringValue } from './utils/formaters';
 import { baseFonts, defaultPresetText, fontList, fontsPreferencesPresets, testFontString, textSizeForFontInfo, vendorFlavorKeys } from './utils/constants';
 import { matchGenerator } from './utils/css-helpers';
-import { countTruthy, replaceNaN, toFloat, toInt } from './utils/data';
+import { countTruthy, replaceNaN, round, toFloat, toInt } from './utils/data';
 import { isAndroid, isChromium, isChromium86OrNewer, isDesktopSafari, isEdgeHTML, isIPad, isTrident, isWebKit, isWebKit606OrNewer } from './utils/browser';
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
@@ -128,7 +129,7 @@ export class Device {
         this.getDomBlockers(),
         this.getFontPreferences(),
         this.getAudioFingerprint(),
-        this.watchScreenFrame(),
+        this.getRoundedScreenFrame(),
       ]);
       this.fonts = paramToString(fonts);
       this.domBlockers = paramToString(domBlockers);
@@ -987,20 +988,20 @@ export class Device {
     return JSON.stringify(plugins);
   }
 
-  private screenFrameBackup?: any[];
+  private screenFrameBackup?: FrameSize;
   private screenFrameSizeTimeoutId?: any;
   private screenFrameCheckInterval = 2500;
 
-  private async watchScreenFrame(): Promise<Array<number> | undefined> {
+  private async watchScreenFrame(): Promise<FrameSize | undefined> {
     if (this.screenFrameSizeTimeoutId !== undefined) {
       return undefined;
     }
-    const checkScreenFrame = async (): Promise<Array<number>> => {
+    const checkScreenFrame = async (): Promise<FrameSize> => {
       return new Promise((resolve, reject) => {
-        const frameSize = this.getCurrentScreenFrame();
+        const frameSize: FrameSize = this.getCurrentScreenFrame();
         if (this.isFrameSizeNull(frameSize)) {
           this.screenFrameSizeTimeoutId = setTimeout(async () => {
-            const result: Array<number> = await checkScreenFrame();
+            const result: FrameSize = await checkScreenFrame();
             resolve(result);
           }, this.screenFrameCheckInterval);
         } else {
@@ -1013,7 +1014,47 @@ export class Device {
     return checkScreenFrame();
   }
 
-  private getCurrentScreenFrame(): Array<number> {
+  private async getScreenFrame(): Promise<() => Promise<FrameSize>> {
+    await this.watchScreenFrame();
+
+    return async (): Promise<FrameSize> => {
+      let frameSize = this.getCurrentScreenFrame();
+
+      if (this.isFrameSizeNull(frameSize)) {
+        if (this.screenFrameBackup) {
+          return [...this.screenFrameBackup];
+        }
+
+        if (getFullscreenElement()) {
+          // Some browsers set the screen frame to zero when programmatic fullscreen is on.
+          // There is a chance of getting a non-zero frame after exiting the fullscreen.
+          // See more on this at https://github.com/fingerprintjs/fingerprintjs/issues/568
+          await exitFullscreen();
+          frameSize = this.getCurrentScreenFrame();
+        }
+      }
+
+      if (!this.isFrameSizeNull(frameSize)) {
+        this.screenFrameBackup = frameSize;
+      }
+
+      return frameSize;
+    };
+  }
+
+  private async getRoundedScreenFrame(): Promise<FrameSize> {
+    const screenFrameGetter = await this.getScreenFrame();
+
+    const frameSize = await screenFrameGetter();
+    const roundingPrecision = 10;
+    const processSize = (sideSize: FrameSize[number]) => (sideSize === null ? null : round(sideSize, roundingPrecision));
+
+    // It might look like I don't know about `for` and `map`.
+    // In fact, such code is used to avoid TypeScript issues without using `as`.
+    return [processSize(frameSize[0]), processSize(frameSize[1]), processSize(frameSize[2]), processSize(frameSize[3])];
+  }
+
+  private getCurrentScreenFrame(): FrameSize {
     const s = screen;
 
     // Some browsers return screen resolution as strings, e.g. "1200", instead of a number, e.g. 1200.

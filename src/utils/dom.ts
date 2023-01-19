@@ -114,3 +114,14 @@ export function addStyleString(style: CSSStyleDeclaration, source: string): void
     }
   }
 }
+
+export function getFullscreenElement(): Element | null {
+  const d = document
+  return d.fullscreenElement || (d as any).msFullscreenElement || (d as any).mozFullScreenElement || (d as any).webkitFullscreenElement || null
+}
+
+export function exitFullscreen(): Promise<void> {
+  const d = document
+  // `call` is required because the function throws an error without a proper "this" context
+  return (d.exitFullscreen || (d as any).msExitFullscreen || (d as any).mozCancelFullScreen || (d as any).webkitExitFullscreen).call(d)
+}

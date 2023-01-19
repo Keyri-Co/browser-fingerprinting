@@ -5,6 +5,8 @@ export type WritableCSSProperties = {
 export type WritableCSSStyles = Partial<Pick<CSSStyleDeclaration, WritableCSSProperties>>;
 
 export type Preset = [style?: WritableCSSStyles, text?: string];
+
+export type FrameSize = [number | null, number | null, number | null, number | null]
 export interface IGetVideoCardInfo {
   vendor?: string;
   renderer?: string;
