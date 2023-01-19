@@ -1,5 +1,5 @@
 import { MaybePromise, wait } from './async';
-import { parseSimpleCssSelector } from './data';
+import { parseSimpleCssSelector } from './css-helpers';
 
 /**
  * Creates and keeps an invisible iframe while the given function runs.

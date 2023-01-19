@@ -44,7 +44,9 @@
       }
 
       const device = new Device();
-      device.load().then(value => {
+      device.load().catch(err => {
+        console.error(err.message);
+      }).then(value => {
         const deviceFingerPrint = device.createFingerprintHash();
 
         function printListIntoHTML(objectList, elem) {
