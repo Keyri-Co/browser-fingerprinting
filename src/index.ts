@@ -142,7 +142,7 @@ export class Device {
     }
   }
 
-  createFingerprintHash(): Promise<string> {
+  createFingerprintHash(): string {
     const nonHashedString = objectToCanonicalString(this.getMainParams());
     const hash = this.hash(nonHashedString);
     return hash;
@@ -1014,38 +1014,34 @@ export class Device {
     return checkScreenFrame();
   }
 
-  private async getScreenFrame(): Promise<() => Promise<FrameSize>> {
+  private async getScreenFrame(): Promise<FrameSize> {
     await this.watchScreenFrame();
 
-    return async (): Promise<FrameSize> => {
-      let frameSize = this.getCurrentScreenFrame();
+    let frameSize = this.getCurrentScreenFrame();
 
-      if (this.isFrameSizeNull(frameSize)) {
-        if (this.screenFrameBackup) {
-          return [...this.screenFrameBackup];
-        }
-
-        if (getFullscreenElement()) {
-          // Some browsers set the screen frame to zero when programmatic fullscreen is on.
-          // There is a chance of getting a non-zero frame after exiting the fullscreen.
-          // See more on this at https://github.com/fingerprintjs/fingerprintjs/issues/568
-          await exitFullscreen();
-          frameSize = this.getCurrentScreenFrame();
-        }
+    if (this.isFrameSizeNull(frameSize)) {
+      if (this.screenFrameBackup) {
+        return [...this.screenFrameBackup];
       }
 
-      if (!this.isFrameSizeNull(frameSize)) {
-        this.screenFrameBackup = frameSize;
+      if (getFullscreenElement()) {
+        // Some browsers set the screen frame to zero when programmatic fullscreen is on.
+        // There is a chance of getting a non-zero frame after exiting the fullscreen.
+        // See more on this at https://github.com/fingerprintjs/fingerprintjs/issues/568
+        await exitFullscreen();
+        frameSize = this.getCurrentScreenFrame();
       }
+    }
 
-      return frameSize;
-    };
+    if (!this.isFrameSizeNull(frameSize)) {
+      this.screenFrameBackup = frameSize;
+    }
+
+    return frameSize;
   }
 
   private async getRoundedScreenFrame(): Promise<FrameSize> {
-    const screenFrameGetter = await this.getScreenFrame();
-
-    const frameSize = await screenFrameGetter();
+    const frameSize = await this.getScreenFrame();
     const roundingPrecision = 10;
     const processSize = (sideSize: FrameSize[number]) => (sideSize === null ? null : round(sideSize, roundingPrecision));
 

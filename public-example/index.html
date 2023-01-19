@@ -14,6 +14,7 @@
 
     <div class="user_data">
       <h3>Fingerprint Data</h3>
+      <h5 id="device_hash"></h5>
       <h5 id="user_exists"></h5>
       <h5 id="user_name"></h5>
       <div id="add-new-user-block" style="display: none">
@@ -118,9 +119,14 @@
             setExistUserData(result.data);
           });
 
-          getFingerprintData(deviceFingerPrint).then(async ({ data }) => {
-            return setExistUserData(data);
-          });
+          getFingerprintData(deviceFingerPrint)
+            .then(async ({ data }) => {
+              return setExistUserData(data);
+            })
+            .finally(() => {
+              const deviceHashBlock = document.getElementById('device_hash');
+              deviceHashBlock.innerText = `Device hash: ${deviceFingerPrint}`;
+            });
         });
     </script>
   </body>
