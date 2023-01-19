@@ -20,6 +20,10 @@ body {
 
 ul > li {
     padding: 10px 20px;
+    word-break: break-all;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
 ul > li:nth-child(odd) {

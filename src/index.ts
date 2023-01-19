@@ -2,7 +2,18 @@ import { selectorToElement, withIframe } from './utils/dom';
 import { x64hash128 } from './utils/hashing';
 import { getFilters } from './utils/dom-blockers';
 import { MaybePromise, suppressUnhandledRejectionWarning, wait } from './utils/async';
-import { ContrastPreference, IGetTouchSupport, IGetVideoCardInfo, InnerErrorName, Preset, SpecialFingerprint } from './types';
+import {
+  CanvasFingerprint,
+  ContrastPreference,
+  IGetTouchSupport,
+  IGetVideoCardInfo,
+  InnerErrorName,
+  PluginData,
+  PluginMimeTypeData,
+  Preset,
+  SpecialFingerprint,
+} from './types';
+import { canvasToString, doesSupportWinding, isSupported, makeCanvasContext, renderGeometryImage, renderTextImage } from './utils/canvas';
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
 const isNode = new Function('try {return this===global;}catch(e){return false;}');
@@ -44,6 +55,18 @@ export class Device {
   domBlockers: string = this.unknownStringValue;
   fontPreferences: string = this.unknownStringValue;
   audioFingerprint: string = this.unknownStringValue;
+  sessionStorage: string = this.unknownStringValue;
+  localStorage: string = this.unknownStringValue;
+  indexedDB: string = this.unknownStringValue;
+  openDatabase: string = this.unknownStringValue;
+  cpuClass: string = this.unknownStringValue;
+  plugins: string = this.unknownStringValue;
+  canvas: string = this.unknownStringValue;
+  vendorFlavors: string = this.unknownStringValue;
+  monochromeDepth: string = this.unknownStringValue;
+  motionReduced: string = this.unknownStringValue;
+  math: string = this.unknownStringValue;
+  architecture: string = this.unknownStringValue;
   constructor() {
     this.hash = x64hash128;
 
@@ -82,6 +105,18 @@ export class Device {
     this.currentBrowserBuildNumber = this.paramToString(navigator.productSub);
     this.screenFrame = this.paramToString(this.screenFrameBackup);
     this.connection = this.paramToString(JSON.stringify((navigator as any).connection));
+    this.sessionStorage = this.paramToString(this.getSessionStorage());
+    this.localStorage = this.paramToString(this.getLocalStorage());
+    this.indexedDB = this.paramToString(this.getIndexedDB());
+    this.openDatabase = this.paramToString(this.getOpenDatabase());
+    this.cpuClass = this.paramToString(this.getCpuClass());
+    this.plugins = this.paramToString(this.getPlugins());
+    this.canvas = this.paramToString(this.getCanvasFingerprint());
+    this.vendorFlavors = this.paramToString(this.getVendorFlavors());
+    this.monochromeDepth = this.paramToString(this.getMonochromeDepth());
+    this.motionReduced = this.paramToString(this.isMotionReduced());
+    this.math = this.paramToString(this.getMathFingerprint());
+    this.architecture = this.paramToString(this.getArchitecture());
   }
 
   async load() {
@@ -132,12 +167,34 @@ export class Device {
       colorsInverted: this.colorsInverted,
       connection: this.connection,
       audioFingerprint: this.audioFingerprint,
+      sessionStorage: this.sessionStorage,
+      localStorage: this.localStorage,
+      indexedDB: this.indexedDB,
+      openDatabase: this.openDatabase,
+      cpuClass: this.cpuClass,
+      plugins: this.plugins,
+      canvas: this.canvas,
+      vendorFlavors: this.vendorFlavors,
+      monochromeDepth: this.monochromeDepth,
+      motionReduced: this.motionReduced,
+      math: this.math,
+      architecture: this.architecture,
     };
+  }
+
+  private getArchitecture(): number {
+    const f = new Float32Array(1);
+    const u8 = new Uint8Array(f.buffer);
+    f[0] = Infinity;
+    f[0] = f[0] - f[0];
+
+    return u8[3];
   }
 
   private paramToString(value: any): string {
     if (typeof value === 'undefined') return this.unknownStringValue;
     if (typeof value === 'string') return value;
+    if (typeof value === 'object') return JSON.stringify(value);
     return value.toString();
   }
 
@@ -148,6 +205,184 @@ export class Device {
       result += `${result ? '|' : ''}${objectKey.replace(/([:|\\])/g, '\\$1')}:${component}`;
     }
     return result;
+  }
+
+  private getMathFingerprint(): Record<string, number> {
+    const M = Math; // To reduce the minified code size
+    const fallbackFn = () => 0;
+    // Native operations
+    const acos = M.acos || fallbackFn;
+    const acosh = M.acosh || fallbackFn;
+    const asin = M.asin || fallbackFn;
+    const asinh = M.asinh || fallbackFn;
+    const atanh = M.atanh || fallbackFn;
+    const atan = M.atan || fallbackFn;
+    const sin = M.sin || fallbackFn;
+    const sinh = M.sinh || fallbackFn;
+    const cos = M.cos || fallbackFn;
+    const cosh = M.cosh || fallbackFn;
+    const tan = M.tan || fallbackFn;
+    const tanh = M.tanh || fallbackFn;
+    const exp = M.exp || fallbackFn;
+    const expm1 = M.expm1 || fallbackFn;
+    const log1p = M.log1p || fallbackFn;
+
+    // Operation polyfills
+    const powPI = (value: number) => M.pow(M.PI, value);
+    const acoshPf = (value: number) => M.log(value + M.sqrt(value * value - 1));
+    const asinhPf = (value: number) => M.log(value + M.sqrt(value * value + 1));
+    const atanhPf = (value: number) => M.log((1 + value) / (1 - value)) / 2;
+    const sinhPf = (value: number) => M.exp(value) - 1 / M.exp(value) / 2;
+    const coshPf = (value: number) => (M.exp(value) + 1 / M.exp(value)) / 2;
+    const expm1Pf = (value: number) => M.exp(value) - 1;
+    const tanhPf = (value: number) => (M.exp(2 * value) - 1) / (M.exp(2 * value) + 1);
+    const log1pPf = (value: number) => M.log(1 + value);
+
+    // Note: constant values are empirical
+    return {
+      acos: acos(0.123124234234234242),
+      acosh: acosh(1e308),
+      acoshPf: acoshPf(1e154), // 1e308 will not work for polyfill
+      asin: asin(0.123124234234234242),
+      asinh: asinh(1),
+      asinhPf: asinhPf(1),
+      atanh: atanh(0.5),
+      atanhPf: atanhPf(0.5),
+      atan: atan(0.5),
+      sin: sin(-1e300),
+      sinh: sinh(1),
+      sinhPf: sinhPf(1),
+      cos: cos(10.000000000123),
+      cosh: cosh(1),
+      coshPf: coshPf(1),
+      tan: tan(-1e300),
+      tanh: tanh(1),
+      tanhPf: tanhPf(1),
+      exp: exp(1),
+      expm1: expm1(1),
+      expm1Pf: expm1Pf(1),
+      log1p: log1p(10),
+      log1pPf: log1pPf(10),
+      powPI: powPI(-100),
+    };
+  }
+
+  private getMonochromeDepth(): number | undefined {
+    const maxValueToCheck = 100;
+    if (!matchMedia('(min-monochrome: 0)').matches) {
+      // The media feature isn't supported by the browser
+      return undefined;
+    }
+
+    // A variation of binary search algorithm can be used here.
+    // But since expected values are very small (≤10), there is no sense in adding the complexity.
+    for (let i = 0; i <= maxValueToCheck; ++i) {
+      if (matchMedia(`(max-monochrome: ${i})`).matches) {
+        return i;
+      }
+    }
+
+    throw new Error('Too high value');
+  }
+
+  private getVendorFlavors(): string[] {
+    const flavors: string[] = [];
+
+    for (const key of [
+      // Blink and some browsers on iOS
+      'chrome',
+
+      // Safari on macOS
+      'safari',
+
+      // Chrome on iOS (checked in 85 on 13 and 87 on 14)
+      '__crWeb',
+      '__gCrWeb',
+
+      // Yandex Browser on iOS, macOS and Android (checked in 21.2 on iOS 14, macOS and Android)
+      'yandex',
+
+      // Yandex Browser on iOS (checked in 21.2 on 14)
+      '__yb',
+      '__ybro',
+
+      // Firefox on iOS (checked in 32 on 14)
+      '__firefox__',
+
+      // Edge on iOS (checked in 46 on 14)
+      '__edgeTrackingPreventionStatistics',
+      'webkit',
+
+      // Opera Touch on iOS (checked in 2.6 on 14)
+      'oprt',
+
+      // Samsung Internet on Android (checked in 11.1)
+      'samsungAr',
+
+      // UC Browser on Android (checked in 12.10 and 13.0)
+      'ucweb',
+      'UCShellJava',
+
+      // Puffin on Android (checked in 9.0)
+      'puffinDevice',
+
+      // UC on iOS and Opera on Android have no specific global variables
+      // Edge for Android isn't checked
+    ]) {
+      const value = (window as unknown as Record<string, unknown>)[key];
+      if (value && typeof value === 'object') {
+        flavors.push(key);
+      }
+    }
+
+    return flavors.sort();
+  }
+
+  private isMotionReduced(): boolean | undefined {
+    const doesMatch = (value: string) => {
+      return matchMedia(`(prefers-reduced-motion: ${value})`).matches;
+    };
+    if (doesMatch('reduce')) {
+      return true;
+    }
+    if (doesMatch('no-preference')) {
+      return false;
+    }
+    return undefined;
+  }
+
+  private getCanvasFingerprint(): CanvasFingerprint {
+    let winding = false;
+    let geometry: string;
+    let text: string;
+
+    const [canvas, context] = makeCanvasContext();
+    if (!isSupported(canvas, context)) {
+      geometry = text = ''; // The value will be 'unsupported' in v3.4
+    } else {
+      winding = doesSupportWinding(context);
+
+      renderTextImage(canvas, context);
+      const textImage1 = canvasToString(canvas);
+      const textImage2 = canvasToString(canvas); // It's slightly faster to double-encode the text image
+
+      // Some browsers add a noise to the canvas: https://github.com/fingerprintjs/fingerprintjs/issues/791
+      // The canvas is excluded from the fingerprint in this case
+      if (textImage1 !== textImage2) {
+        geometry = text = 'unstable';
+      } else {
+        text = textImage1;
+
+        // Text is unstable:
+        // https://github.com/fingerprintjs/fingerprintjs/issues/583
+        // https://github.com/fingerprintjs/fingerprintjs/issues/103
+        // Therefore it's extracted into a separate image.
+        renderGeometryImage(canvas, context);
+        geometry = canvasToString(canvas);
+      }
+    }
+
+    return { winding, geometry, text };
   }
 
   private textSizeForTest = '48px';
@@ -287,7 +522,57 @@ export class Device {
     });
   }
 
-  async getDomBlockers(): Promise<string> {
+  private getOpenDatabase(): boolean {
+    return !!(window as any).openDatabase;
+  }
+
+  private getIndexedDB(): boolean | undefined {
+    // IE and Edge don't allow accessing indexedDB in private mode, therefore IE and Edge will have different
+    // visitor identifier in normal and private modes.
+    if (this.isTrident() || this.isEdgeHTML()) {
+      return undefined;
+    }
+    try {
+      return !!window.indexedDB;
+    } catch (e) {
+      /* SecurityError when referencing it means it exists */
+      return true;
+    }
+  }
+
+  private isTrident(): boolean {
+    const w = window;
+    const n = navigator;
+
+    // The properties are checked to be in IE 10, IE 11 and not to be in other browsers in October 2020
+    return this.countTruthy(['MSCSSMatrix' in w, 'msSetImmediate' in w, 'msIndexedDB' in w, 'msMaxTouchPoints' in n, 'msPointerEnabled' in n]) >= 4;
+  }
+
+  private isEdgeHTML(): boolean {
+    // Based on research in October 2020
+    const w = window;
+    const n = navigator;
+
+    return this.countTruthy(['msWriteProfilerMark' in w, 'MSStream' in w, 'msLaunchUri' in n, 'msSaveBlob' in n]) >= 3 && !this.isTrident();
+  }
+
+  private getSessionStorage(): boolean {
+    try {
+      return !!window.sessionStorage;
+    } catch (error) {
+      return true;
+    }
+  }
+
+  private getLocalStorage(): boolean {
+    try {
+      return !!window.localStorage;
+    } catch (e) {
+      return true;
+    }
+  }
+
+  private async getDomBlockers(): Promise<string> {
     if (!this.isApplicable()) {
       return this.unknownStringValue;
     }
@@ -702,6 +987,10 @@ export class Device {
     return arch;
   }
 
+  private getCpuClass(): string | undefined {
+    return (navigator as any).cpuClass;
+  }
+
   private getNavigatorValues(): Navigator {
     return navigator;
   }
@@ -844,6 +1133,41 @@ export class Device {
     }
 
     return platform;
+  }
+
+  private getPlugins(): string | undefined {
+    const rawPlugins = navigator.plugins;
+
+    if (!rawPlugins) {
+      return undefined;
+    }
+
+    const plugins: PluginData[] = [];
+
+    // Safari 10 doesn't support iterating navigator.plugins with for...of
+    for (let i = 0; i < rawPlugins.length; ++i) {
+      const plugin = rawPlugins[i];
+      if (!plugin) {
+        continue;
+      }
+
+      const mimeTypes: PluginMimeTypeData[] = [];
+      for (let j = 0; j < plugin.length; ++j) {
+        const mimeType = plugin[j];
+        mimeTypes.push({
+          type: mimeType.type,
+          suffixes: mimeType.suffixes,
+        });
+      }
+
+      plugins.push({
+        name: plugin.name,
+        description: plugin.description,
+        mimeTypes,
+      });
+    }
+
+    return JSON.stringify(plugins);
   }
 
   private isAndroid(): boolean {

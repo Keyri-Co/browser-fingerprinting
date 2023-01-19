@@ -35,3 +35,20 @@ export enum InnerErrorName {
   Timeout = 'timeout',
   Suspended = 'suspended',
 }
+
+export type PluginMimeTypeData = {
+  type: string
+  suffixes: string
+}
+
+export type PluginData = {
+  name: string
+  description: string
+  mimeTypes: PluginMimeTypeData[]
+}
+
+export interface CanvasFingerprint {
+  winding: boolean
+  geometry: string
+  text: string
+}
