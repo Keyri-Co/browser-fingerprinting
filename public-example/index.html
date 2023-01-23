@@ -17,6 +17,9 @@
       <h5 id="device_hash"></h5>
       <h5 id="user_exists"></h5>
       <h5 id="user_name"></h5>
+      <h5 id="last-visit">
+        Recently visited from ip:
+      </h5>
       <div id="add-new-user-block" style="display: none">
         Add new user with name: <input type="text" id="name" />
         <button id="add-new-user">Add</button>
@@ -30,7 +33,7 @@
         local: 'LOCAL',
         development: 'DEVELOPMENT',
       };
-      const currentEnv = environments.development;
+      const currentEnv = environments.local;
       let baseUrl;
 
       switch (currentEnv) {
@@ -79,6 +82,26 @@
             }
             const userExistBlock = document.getElementById('user_exists');
             userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
+
+            if (data.visits.length > 1) {
+              let visits = data.visits;
+              const lastVisit = visits.sort((a, b) => a.time > b.time)[0];
+              const visitsBlock = document.getElementById('last-visit');
+              const list = document.createElement('ul');
+              const {
+                ip,
+                location: { city, country },
+                timestamp,
+              } = lastVisit;
+              const result = { ip, city, country, timestamp };
+              Object.keys(result).forEach((key) => {
+                const block = document.createElement('li');
+                block.innerText = `${key}: ${result[key]}`;
+                list.appendChild(block);
+              });
+
+              visitsBlock.appendChild(list);
+            }
             return data;
           }
 

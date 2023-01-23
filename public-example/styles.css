@@ -18,6 +18,10 @@ body {
     padding: 0;
 }
 
+#last-visit > ul {
+    padding: 0;
+}
+
 ul > li {
     padding: 10px 20px;
     word-break: break-all;

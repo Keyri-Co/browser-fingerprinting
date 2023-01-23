@@ -1042,7 +1042,7 @@ export class Device {
 
   private async getRoundedScreenFrame(): Promise<FrameSize> {
     const frameSize = await this.getScreenFrame();
-    const roundingPrecision = 10;
+    const roundingPrecision = 25;
     const processSize = (sideSize: FrameSize[number]) => (sideSize === null ? null : round(sideSize, roundingPrecision));
 
     // It might look like I don't know about `for` and `map`.
