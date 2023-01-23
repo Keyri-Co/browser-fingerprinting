@@ -33,7 +33,7 @@
         local: 'LOCAL',
         development: 'DEVELOPMENT',
       };
-      const currentEnv = environments.local;
+      const currentEnv = environments.development;
       let baseUrl;
 
       switch (currentEnv) {
@@ -83,9 +83,9 @@
             const userExistBlock = document.getElementById('user_exists');
             userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
 
-            if (data.visits.length > 1) {
+            if (data.visits.length > 0) {
               let visits = data.visits;
-              const lastVisit = visits.sort((a, b) => a.time > b.time)[0];
+              const lastVisit = visits.sort((a, b) => b.time - a.time)[0];
               const visitsBlock = document.getElementById('last-visit');
               const list = document.createElement('ul');
               const {
