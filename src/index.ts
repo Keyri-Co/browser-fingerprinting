@@ -19,6 +19,7 @@ import { baseFonts, defaultPresetText, fontList, fontsPreferencesPresets, testFo
 import { matchGenerator } from './utils/css-helpers';
 import { countTruthy, replaceNaN, round, toFloat, toInt } from './utils/data';
 import { isAndroid, isChromium, isChromium86OrNewer, isDesktopSafari, isEdgeHTML, isIPad, isTrident, isWebKit, isWebKit606OrNewer } from './utils/browser';
+import { IndexDB } from './utils/idb';
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
 const isNode = new Function('try {return this===global;}catch(e){return false;}');
@@ -72,12 +73,20 @@ export class Device {
   motionReduced: string = this.unknownStringValue;
   math: string = this.unknownStringValue;
   architecture: string = this.unknownStringValue;
+  db: IndexDB | undefined;
+  private dbName: string = this.unknownStringValue;
+  private storeName: string = this.unknownStringValue;
+  private cryptoKeyId: string = this.unknownStringValue;
   constructor() {
     this.hash = x64hash128;
 
     const isScriptRunnedInBrowser = isBrowser();
     if (!isScriptRunnedInBrowser) return;
 
+    this.dbName = 'keyri-fingerprint';
+    this.storeName = 'cookies';
+    this.cryptoKeyId = 'crypto-key';
+    this.db = new IndexDB();
     this.screenColorDepth = paramToString(this.getColorDepth());
     this.colorGamut = paramToString(this.getColorGamut());
     this.contrastPreferences = paramToString(this.getContrastPreference());
@@ -122,14 +131,36 @@ export class Device {
     this.architecture = paramToString(this.getArchitecture());
   }
 
+  async initCryptoCookie() {
+    const isScriptRunnedInBrowser = isBrowser();
+    if (!isScriptRunnedInBrowser || !this.db) return;
+
+    const readTransaction = this.db.createTransaction(this.storeName, 'readonly');
+    const preCachedKey = await this.db?.getByKey(readTransaction, this.cryptoKeyId);
+    if (preCachedKey) return preCachedKey.hash;
+
+    const transaction = this.db.createTransaction(this.storeName, 'readwrite');
+    const deviceHash = this.createFingerprintHash();
+    const hash = this.hash(deviceHash);
+    await this.db?.put(transaction, {id: this.cryptoKeyId, hash: hash});
+    return hash;
+  }
+
   async load() {
     try {
-      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame] = await Promise.all([
+      const storeName = this.storeName;
+      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, ...other] = await Promise.all([
         this.getFonts(),
         this.getDomBlockers(),
         this.getFontPreferences(),
         this.getAudioFingerprint(),
         this.getRoundedScreenFrame(),
+        this.db?.connect(this.dbName, 1, function(this, event) {
+          let db = this.result;
+          if (!db.objectStoreNames.contains(storeName)) {
+            db.createObjectStore(storeName, { keyPath: 'id' });
+          }
+        }),
       ]);
       this.fonts = paramToString(fonts);
       this.domBlockers = paramToString(domBlockers);

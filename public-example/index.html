@@ -15,6 +15,7 @@
     <div class="user_data">
       <h3>Fingerprint Data</h3>
       <h5 id="device_hash"></h5>
+      <h5 id="crypto_cookie"></h5>
       <h5 id="user_exists"></h5>
       <h5 id="user_name"></h5>
       <h5 id="last-visit">
@@ -33,7 +34,7 @@
         local: 'LOCAL',
         development: 'DEVELOPMENT',
       };
-      const currentEnv = environments.development;
+      const currentEnv = environments.local;
       let baseUrl;
 
       switch (currentEnv) {
@@ -53,8 +54,9 @@
         .catch((err) => {
           console.error(err.message);
         })
-        .then((value) => {
+        .then(async (value) => {
           const deviceFingerPrint = device.createFingerprintHash();
+          const cryptoCookie = await device.initCryptoCookie();
 
           function printListIntoHTML(objectList, elem) {
             const elemBox = document.getElementById(elem);
@@ -111,6 +113,7 @@
               headers: {
                 accept: 'application/json',
                 deviceHash,
+                cryptoCookie,
               },
             });
 
@@ -129,6 +132,7 @@
                 deviceHash,
                 name,
                 deviceParams,
+                cryptoCookie
               }),
             });
 
@@ -149,6 +153,8 @@
             .finally(() => {
               const deviceHashBlock = document.getElementById('device_hash');
               deviceHashBlock.innerText = `Device hash: ${deviceFingerPrint}`;
+              const cryptoCookieHashBlock = document.getElementById('crypto_cookie');
+              cryptoCookieHashBlock.innerText = `Cookie hash: ${cryptoCookie}`;
             });
         });
     </script>
