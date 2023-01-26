@@ -1,4 +1,5 @@
 const path = require('path');
+const WebpackObfuscator = require('webpack-obfuscator');
 
 module.exports = {
   mode: 'production',
@@ -6,9 +7,9 @@ module.exports = {
   output: {
     filename: 'index.js',
     path: path.resolve(__dirname, 'dist'),
-    libraryTarget: "umd",
+    libraryTarget: 'umd',
     clean: true,
-    globalObject: 'this'
+    globalObject: 'this',
   },
   resolve: {
     extensions: ['.ts', '.js'],
@@ -18,8 +19,16 @@ module.exports = {
       {
         test: /\.ts?$/,
         use: ['ts-loader'],
-        exclude: /node-modules/
-      }
+        exclude: /node-modules/,
+      },
     ],
-  }
-}
+  },
+  plugins: [
+    new WebpackObfuscator({
+      rotateStringArray: true,
+      splitStrings: true,
+      selfDefending: true,
+      splitStringsChunkLength: 5,
+    }),
+  ],
+};
