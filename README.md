@@ -4,7 +4,7 @@
     </a>
 </p>
 
-<p align="center">Library, which can be used with Keyri functionallity for building fingerprint system</p>
+<p align="center">A library from Keyri for fingerprinting web browsers</p>
 
 <p align="center">
     <a href="https://keyri.com"><b>Website</b></a> •
@@ -14,7 +14,7 @@
 ## Features
 
 - Retrieve device data for logging and analytics
-- Create identifier, based on device parameters
+- Create identifier based on device data
 
 ## Installing
 
@@ -26,7 +26,7 @@ Using npm:
 $ npm install keyri-fingerprint
 ```
 
-Once the package is installed, you can import the library using `import` or `require` approach:
+Once the package is installed, you can import the library using `import` or `require`:
 
 ```js
 import { Device } from 'keyri-fingerprint';
@@ -55,7 +55,7 @@ const deviceHash: string = device.createFingerprintHash();
 
 ## API
 
-After you create new `Device` instance you will be able to use next public methods:
+After you create new `Device` instance you will be able to use the following public methods:
 
 | Method                  | Arguments | Return                   | Description                                                             |
 | ----------------------- | --------- | ------------------------ | ----------------------------------------------------------------------- |
@@ -139,7 +139,7 @@ console.log(JSON.stringify(deviceMainParams));
 }
 ```
 
-> **Note** If you try to get device params in `nodeJs` environment you always will receive the same response object
+> **Note** If you try to get device params in a `nodeJs` environment, you always will receive the same response object
 >
 > ```json
 > {
