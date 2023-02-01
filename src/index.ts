@@ -1072,13 +1072,17 @@ export class Device {
   }
 
   private async getRoundedScreenFrame(): Promise<FrameSize> {
-    const frameSize = await this.getScreenFrame();
-    const roundingPrecision = 25;
-    const processSize = (sideSize: FrameSize[number]) => (sideSize === null ? null : round(sideSize, roundingPrecision));
+    try {
+      const frameSize = await this.getScreenFrame();
+      const roundingPrecision = 25;
+      const processSize = (sideSize: FrameSize[number]) => (sideSize === null ? null : round(sideSize, roundingPrecision));
 
-    // It might look like I don't know about `for` and `map`.
-    // In fact, such code is used to avoid TypeScript issues without using `as`.
-    return [processSize(frameSize[0]), processSize(frameSize[1]), processSize(frameSize[2]), processSize(frameSize[3])];
+      // It might look like I don't know about `for` and `map`.
+      // In fact, such code is used to avoid TypeScript issues without using `as`.
+      return [processSize(frameSize[0]), processSize(frameSize[1]), processSize(frameSize[2]), processSize(frameSize[3])];
+    } catch (err) {
+      return new Promise(() => [null, null, null, null]);
+    }
   }
 
   private getCurrentScreenFrame(): FrameSize {
@@ -1099,7 +1103,7 @@ export class Device {
 
   private isFrameSizeNull(frameSize: any[]): boolean {
     for (let i = 0; i < 4; ++i) {
-      if (frameSize[i]) {
+      if (typeof frameSize[i] === 'number') {
         return false;
       }
     }
