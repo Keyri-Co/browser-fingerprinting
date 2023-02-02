@@ -148,19 +148,41 @@ export class Device {
     this.architecture = paramToString(this.getArchitecture());
   }
 
+  private async getPreCachedCryptoCookie(): Promise<string | null> {
+    try {
+      const isScriptRunnedInBrowser = isBrowser();
+      if (!isScriptRunnedInBrowser || !this.db) return null;
+      const readTransaction = this.db.createTransaction(this.storeName, 'readonly');
+      let preCachedKey: any = await this.db?.getByKey(readTransaction, this.cryptoKeyId);
+      if (preCachedKey.hash) return preCachedKey.hash;
+      preCachedKey = localStorage.getItem(this.cryptoKeyId);
+      return preCachedKey;
+    } catch (err) {
+      const localStorageKey = localStorage.getItem(this.cryptoKeyId);
+      return localStorageKey;
+    }
+  }
+
   async initCryptoCookie() {
-    const isScriptRunnedInBrowser = isBrowser();
-    if (!isScriptRunnedInBrowser || !this.db) return;
+    try {
+      const isScriptRunnedInBrowser = isBrowser();
+      if (!isScriptRunnedInBrowser || !this.db) return;
 
-    const readTransaction = this.db.createTransaction(this.storeName, 'readonly');
-    const preCachedKey = await this.db?.getByKey(readTransaction, this.cryptoKeyId);
-    if (preCachedKey) return preCachedKey.hash;
+      const preCachedKey = await this.getPreCachedCryptoCookie();
+      if (preCachedKey) return preCachedKey;
 
-    const transaction = this.db.createTransaction(this.storeName, 'readwrite');
-    const deviceHash = this.createFingerprintHash();
-    const hash = this.hash(deviceHash);
-    await this.db?.put(transaction, { id: this.cryptoKeyId, hash: hash });
-    return hash;
+      const transaction = this.db.createTransaction(this.storeName, 'readwrite');
+      const deviceHash = this.createFingerprintHash();
+      const hash = this.hash(deviceHash);
+      await this.db?.put(transaction, { id: this.cryptoKeyId, hash: hash });
+      return hash;
+    } catch (err: any) {
+      console.error(`Error through creating crypto cookie in IndexDB: ${err.message}`);
+      const deviceHash = this.createFingerprintHash();
+      const hash = this.hash(deviceHash);
+      localStorage.setItem(this.cryptoKeyId, hash);
+      return hash;
+    }
   }
 
   async load() {
