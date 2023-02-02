@@ -9,7 +9,6 @@ export class IndexDB {
       let openRequest = indexedDB.open(dbName, dbVersion);
 
       openRequest.onerror = function () {
-        console.error('Error', openRequest.error);
         reject(openRequest.error);
       };
 

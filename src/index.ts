@@ -42,6 +42,7 @@ const isNode = new Function('try {return this===global;}catch(e){return false;}'
 
 export class Device {
   private hash: Function;
+  private subtle: SubtleCrypto | undefined;
   private unknownStringValue = defaultStringValue;
   screenColorDepth: string = this.unknownStringValue;
   colorGamut: string = this.unknownStringValue;
@@ -100,6 +101,7 @@ export class Device {
     const isScriptRunnedInBrowser = isBrowser();
     if (!isScriptRunnedInBrowser) return;
 
+    this.subtle = window.crypto.subtle;
     this.dbName = 'keyri-fingerprint';
     this.storeName = 'cookies';
     this.cryptoKeyId = 'crypto-key';
@@ -200,6 +202,8 @@ export class Device {
           if (!db.objectStoreNames.contains(storeName)) {
             db.createObjectStore(storeName, { keyPath: 'id' });
           }
+        }).catch((err) => {
+          console.error('IndexDB not allowed in private mode: ', err.message);
         }),
       ]);
       this.isPrivate = paramToString(incognitoMode.isIncognito);
@@ -210,6 +214,7 @@ export class Device {
       this.screenFrame = paramToString(screenFrame);
       return this;
     } catch (err: any) {
+      console.log('err in async load', err);
       return this;
     }
   }

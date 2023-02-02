@@ -33,14 +33,14 @@ export async function newSafariTest(): Promise<boolean> {
 
           const matchesExpectedError = /BlobURLs are not yet supported/.test(message);
 
-          return reject(matchesExpectedError);
+          return resolve(matchesExpectedError);
         } finally {
           res.close();
           window.indexedDB.deleteDatabase(tmp_name);
         }
       };
     } catch (e) {
-      return reject(false);
+      return resolve(false);
     }
   });
 }
@@ -97,7 +97,7 @@ export async function storageQuotaChromePrivateTest(): Promise<boolean> {
         resolve(quotaInMib < quotaLimitInMib);
       },
       function (e: any) {
-        reject(new Error('detectIncognito somehow failed to query storage quota: ' + e.message));
+        reject('detectIncognito somehow failed to query storage quota: ' + e.message);
       },
     );
   })
