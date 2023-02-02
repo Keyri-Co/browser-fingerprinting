@@ -214,7 +214,6 @@ export class Device {
       this.screenFrame = paramToString(screenFrame);
       return this;
     } catch (err: any) {
-      console.log('err in async load', err);
       return this;
     }
   }
