@@ -16,6 +16,7 @@
       <h3>Fingerprint Data</h3>
       <h5 id="device_hash"></h5>
       <h5 id="crypto_cookie"></h5>
+      <h5 id="tls_fingerprint"></h5>
       <h5 id="user_exists"></h5>
       <h5 id="user_name"></h5>
       <h5 id="last-visit">
@@ -34,7 +35,7 @@
         local: 'LOCAL',
         development: 'DEVELOPMENT',
       };
-      const currentEnv = environments.development;
+      const currentEnv = environments.local;
       let baseUrl;
 
       switch (currentEnv) {
@@ -83,6 +84,10 @@
               userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
               addNewUserBlock.style.display = 'none';
             }
+
+            const tlsFingerprintBlock = document.getElementById('tls_fingerprint');
+            tlsFingerprintBlock.innerText = `TLS Fingerprint: ${data.tlsFingerprint}`;
+
             const userExistBlock = document.getElementById('user_exists');
             userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
 
