@@ -69,6 +69,7 @@
           }
 
           const mainParams = device.getMainParams();
+          mainParams.isPrivate = device.isPrivate;
           printListIntoHTML(mainParams, 'constants_info');
 
           function setExistUserData(data) {

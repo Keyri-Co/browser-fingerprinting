@@ -1,4 +1,4 @@
-import { countTruthy } from './data';
+import { assertEvalToString, countTruthy } from './data';
 
 export function isTrident(): boolean {
   const w = window;
@@ -138,4 +138,40 @@ export function isAndroid(): boolean {
     countTruthy(['onorientationchange' in w, 'orientation' in w, isItChromium && !('SharedWorker' in w), isItGecko && /android/i.test(navigator.appVersion)]) >=
     2
   );
+}
+
+export function isSafari(): boolean {
+  const v = navigator.vendor;
+  return v !== undefined && v.indexOf('Apple') === 0 && assertEvalToString(37);
+}
+
+export function isChrome(): boolean {
+  const v = navigator.vendor;
+  return v !== undefined && v.indexOf('Google') === 0 && assertEvalToString(33);
+}
+
+export function isFirefox(): boolean {
+  return document.documentElement !== undefined && (document as any).documentElement.style.MozAppearance !== undefined && assertEvalToString(37);
+}
+
+export function isMSIE(): boolean {
+  return (
+    (navigator as any).msSaveBlob !== undefined && assertEvalToString(39)
+  );
+}
+
+export function identifyChromium(): string {
+  const ua = navigator.userAgent;
+  if (ua.match(/Chrome/)) {
+    if ((navigator as any).brave !== undefined) {
+      return "Brave";
+    } else if (ua.match(/Edg/)) {
+      return "Edge";
+    } else if (ua.match(/OPR/)) {
+      return "Opera";
+    }
+    return "Chrome";
+  } else {
+    return "Chromium";
+  }
 }

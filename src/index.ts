@@ -18,8 +18,24 @@ import { objectToCanonicalString, paramToString, unknownStringValue as defaultSt
 import { baseFonts, defaultPresetText, fontList, fontsPreferencesPresets, testFontString, textSizeForFontInfo, vendorFlavorKeys } from './utils/constants';
 import { matchGenerator } from './utils/css-helpers';
 import { countTruthy, replaceNaN, round, toFloat, toInt } from './utils/data';
-import { isAndroid, isChromium, isChromium86OrNewer, isDesktopSafari, isEdgeHTML, isIPad, isTrident, isWebKit, isWebKit606OrNewer } from './utils/browser';
+import {
+  identifyChromium,
+  isAndroid,
+  isChrome,
+  isChromium,
+  isChromium86OrNewer,
+  isDesktopSafari,
+  isEdgeHTML,
+  isFirefox,
+  isIPad,
+  isMSIE,
+  isSafari,
+  isTrident,
+  isWebKit,
+  isWebKit606OrNewer,
+} from './utils/browser';
 import { IndexDB } from './utils/idb';
+import { chromePrivateTest, firefoxPrivateTest, msiePrivateTest, safariPrivateTest } from './utils/incognito-browser-tests';
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
 const isNode = new Function('try {return this===global;}catch(e){return false;}');
@@ -73,6 +89,7 @@ export class Device {
   motionReduced: string = this.unknownStringValue;
   math: string = this.unknownStringValue;
   architecture: string = this.unknownStringValue;
+  isPrivate: string = this.unknownStringValue;
   db: IndexDB | undefined;
   private dbName: string = this.unknownStringValue;
   private storeName: string = this.unknownStringValue;
@@ -142,26 +159,28 @@ export class Device {
     const transaction = this.db.createTransaction(this.storeName, 'readwrite');
     const deviceHash = this.createFingerprintHash();
     const hash = this.hash(deviceHash);
-    await this.db?.put(transaction, {id: this.cryptoKeyId, hash: hash});
+    await this.db?.put(transaction, { id: this.cryptoKeyId, hash: hash });
     return hash;
   }
 
   async load() {
     try {
       const storeName = this.storeName;
-      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, ...other] = await Promise.all([
+      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, ...other] = await Promise.all([
         this.getFonts(),
         this.getDomBlockers(),
         this.getFontPreferences(),
         this.getAudioFingerprint(),
         this.getRoundedScreenFrame(),
-        this.db?.connect(this.dbName, 1, function(this, event) {
+        this.isIncognitoMode(),
+        this.db?.connect(this.dbName, 1, function (this, event) {
           let db = this.result;
           if (!db.objectStoreNames.contains(storeName)) {
             db.createObjectStore(storeName, { keyPath: 'id' });
           }
         }),
       ]);
+      this.isPrivate = paramToString(incognitoMode.isIncognito);
       this.fonts = paramToString(fonts);
       this.domBlockers = paramToString(domBlockers);
       this.fontPreferences = paramToString(fontPreferences);
@@ -1172,5 +1191,27 @@ export class Device {
       touchEvent,
       touchStart,
     };
+  }
+
+  private async isIncognitoMode(): Promise<{ browserName: string; isIncognito: boolean }> {
+    if (!isBrowser()) return { browserName: 'nodejs', isIncognito: false };
+    let browserName = 'Unknown';
+    let result: boolean = false;
+    if (isSafari()) {
+      browserName = 'Safari';
+      result = await safariPrivateTest();
+    } else if (isChrome()) {
+      browserName = identifyChromium();
+      result = await chromePrivateTest();
+    } else if (isFirefox()) {
+      browserName = 'Firefox';
+      result = firefoxPrivateTest();
+    } else if (isMSIE()) {
+      browserName = 'Internet Explorer';
+      result = msiePrivateTest();
+    } else {
+      throw new Error('detectIncognito cannot determine the browser');
+    }
+    return { browserName, isIncognito: result };
   }
 }

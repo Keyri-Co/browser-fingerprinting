@@ -53,3 +53,7 @@ export function round(value: number, base = 1): number {
     return Math.round(value * counterBase) / counterBase
   }
 }
+
+export function assertEvalToString(value: any): boolean {
+  return value === eval.toString().length;
+}
