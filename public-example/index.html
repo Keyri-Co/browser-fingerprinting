@@ -87,7 +87,7 @@
             tlsFingerprintBlock.innerText = `TLS Fingerprint: ${data.tlsFingerprint}`;
 
             const userExistBlock = document.getElementById('user_exists');
-            userExistBlock.innerText = `Is User Already Exist: ${!!data.name}`;
+            userExistBlock.innerText = `User Previously Existed?: ${!!data.name}`;
 
             if (data.visits.length > 0) {
               let visits = data.visits;
