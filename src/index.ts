@@ -1,5 +1,5 @@
 import { exitFullscreen, getFullscreenElement, selectorToElement, withIframe } from './utils/dom';
-import { x64hash128 } from './utils/hashing';
+import { base64StringToArrayBuffer, x64hash128 } from './utils/hashing';
 import { getFilters } from './utils/dom-blockers';
 import { MaybePromise, suppressUnhandledRejectionWarning, wait } from './utils/async';
 import {
@@ -156,12 +156,57 @@ export class Device {
       if (!isScriptRunnedInBrowser || !this.db) return null;
       const readTransaction = this.db.createTransaction(this.storeName, 'readonly');
       let preCachedKey: any = await this.db?.getByKey(readTransaction, this.cryptoKeyId);
-      if (preCachedKey.hash) return preCachedKey.hash;
+      if (preCachedKey.privateKey) return preCachedKey.privateKey;
       preCachedKey = localStorage.getItem(this.cryptoKeyId);
       return preCachedKey;
     } catch (err) {
       const localStorageKey = localStorage.getItem(this.cryptoKeyId);
       return localStorageKey;
+    }
+  }
+
+  private async getB64KeysFromKeyPair(cryptoKey: CryptoKeyPair) {
+    const publicKeyB64 = await this.getB64KeyFromCryptoKey(cryptoKey.publicKey, 'spki');
+    const privateKeyB64 = await this.getB64KeyFromCryptoKey(cryptoKey.privateKey, 'pkcs8');
+
+    return { publicKeyB64, privateKeyB64 };
+  }
+
+  private async getB64KeyFromCryptoKey(cryptoKey: CryptoKey, format: 'spki' | 'pkcs8' | 'raw') {
+    if (!this.subtle) throw new Error('Crypto module is not initialized');
+    const keyData = await this.subtle.exportKey(format, cryptoKey);
+    const keyBytes = new Uint8Array(keyData);
+    const keyB64 = btoa(String.fromCharCode.apply(null, keyBytes as any));
+
+    return keyB64;
+  }
+
+  private async generateKeyPair() {
+    if (!this.subtle) throw new Error('Crypto module is not initialized');
+    const ECDHKey = await this.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+
+    return this.getB64KeysFromKeyPair(ECDHKey);
+  }
+
+  private async getPublicKeyFromPrivate(privateKey: CryptoKey) {
+    if (!this.subtle) throw new Error('Crypto module is not initialized');
+    const jwkPrivate = await this.subtle.exportKey('jwk', privateKey);
+    delete jwkPrivate.d;
+    jwkPrivate.key_ops = ['verify'];
+    return this.subtle.importKey('jwk', jwkPrivate, { name: 'ECDSA', namedCurve: 'P-256' }, true, ['verify']);
+  }
+
+  private async generateB64PublicKeyFromPrivateKey(privateKeyB64: string): Promise<string | null> {
+    try {
+      if (!this.subtle) throw new Error('Crypto module is not initialized');
+      const privateKeyArrayBuffer = base64StringToArrayBuffer(privateKeyB64);
+      const privateCryptoKey = await this.subtle.importKey('pkcs8', privateKeyArrayBuffer, { name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveKey']);
+
+      const publicCryptoKey = await this.getPublicKeyFromPrivate(privateCryptoKey);
+      return this.getB64KeyFromCryptoKey(publicCryptoKey, 'spki');
+    } catch (err) {
+      console.error('Incorrect private key');
+      return null;
     }
   }
 
@@ -171,19 +216,32 @@ export class Device {
       if (!isScriptRunnedInBrowser || !this.db) return;
 
       const preCachedKey = await this.getPreCachedCryptoCookie();
-      if (preCachedKey) return preCachedKey;
+      if (preCachedKey) {
+        const publicKey = await this.generateB64PublicKeyFromPrivateKey(preCachedKey);
+        if (publicKey) return publicKey;
+      }
 
+      await this.clearStorages();
+      const cryptoPair = await this.generateKeyPair();
       const transaction = this.db.createTransaction(this.storeName, 'readwrite');
-      const deviceHash = this.createFingerprintHash();
-      const hash = this.hash(deviceHash);
-      await this.db?.put(transaction, { id: this.cryptoKeyId, hash: hash });
-      return hash;
+      await this.db?.put(transaction, { id: this.cryptoKeyId, privateKey: cryptoPair.privateKeyB64 });
+      return cryptoPair.publicKeyB64;
     } catch (err: any) {
       console.error(`Error through creating crypto cookie in IndexDB: ${err.message}`);
-      const deviceHash = this.createFingerprintHash();
-      const hash = this.hash(deviceHash);
-      localStorage.setItem(this.cryptoKeyId, hash);
-      return hash;
+      const cryptoPair = await this.generateKeyPair();
+      localStorage.setItem(this.cryptoKeyId, cryptoPair.privateKeyB64);
+      return cryptoPair.publicKeyB64;
+    }
+  }
+
+  private async clearStorages(): Promise<undefined> {
+    try {
+      localStorage.clear();
+      const store = await this.db?.createTransaction(this.storeName, 'readwrite');
+      if (!store) return;
+      await this.db?.clearStore(store);
+    } catch (err) {
+      console.error('Error clearing DBs');
     }
   }
 
@@ -197,14 +255,16 @@ export class Device {
         this.getAudioFingerprint(),
         this.getRoundedScreenFrame(),
         this.isIncognitoMode(),
-        this.db?.connect(this.dbName, 1, function (this, event) {
-          let db = this.result;
-          if (!db.objectStoreNames.contains(storeName)) {
-            db.createObjectStore(storeName, { keyPath: 'id' });
-          }
-        }).catch((err) => {
-          console.error('IndexDB not allowed in private mode: ', err.message);
-        }),
+        this.db
+          ?.connect(this.dbName, 1, function (this, event) {
+            let db = this.result;
+            if (!db.objectStoreNames.contains(storeName)) {
+              db.createObjectStore(storeName, { keyPath: 'id' });
+            }
+          })
+          .catch((err) => {
+            console.error('IndexDB not allowed in private mode: ', err.message);
+          }),
       ]);
       this.isPrivate = paramToString(incognitoMode.isIncognito);
       this.fonts = paramToString(fonts);

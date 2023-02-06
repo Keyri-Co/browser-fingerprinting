@@ -61,6 +61,21 @@ export class IndexDB {
     })
   }
 
+  async clearStore(store: IDBObjectStore) {
+    if (!this.db) throw new Error(this.errors.notInitialized);
+    return new Promise((resolve, reject) => {
+      const clearRequest: IDBRequest<undefined> = store.clear();
+
+      clearRequest.onerror = ((err: Event) => {
+        reject(err);
+      })
+
+      clearRequest.onsuccess = ((event: Event) => {
+        resolve(event);
+      })
+    })
+  }
+
   async put(store: IDBObjectStore, object: any, key?: string) {
     if (!this.db) throw new Error(this.errors.notInitialized);
     return new Promise((resolve, reject) => {

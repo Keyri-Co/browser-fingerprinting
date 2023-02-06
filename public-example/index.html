@@ -19,9 +19,7 @@
       <h5 id="tls_fingerprint"></h5>
       <h5 id="user_exists"></h5>
       <h5 id="user_name"></h5>
-      <h5 id="last-visit">
-        Recently visited from ip:
-      </h5>
+      <h5 id="last-visit">Recently visited from ip:</h5>
       <div id="add-new-user-block" style="display: none">
         Add new user with name: <input type="text" id="name" />
         <button id="add-new-user">Add</button>
@@ -57,7 +55,7 @@
         })
         .then(async (value) => {
           const deviceFingerPrint = device.createFingerprintHash();
-          const cryptoCookie = await device.initCryptoCookie();
+          const cryptoCookie = await device.initCryptoCookie().catch((err) => console.log(err.message));
 
           function printListIntoHTML(objectList, elem) {
             const elemBox = document.getElementById(elem);
@@ -138,7 +136,7 @@
                 deviceHash,
                 name,
                 deviceParams,
-                cryptoCookie
+                cryptoCookie,
               }),
             });
 

@@ -225,4 +225,13 @@ export function x64hash128(key: string, seed?: number): string {
     ('00000000' + (h2[0] >>> 0).toString(16)).slice(-8) +
     ('00000000' + (h2[1] >>> 0).toString(16)).slice(-8)
   );
+};
+
+export function base64StringToArrayBuffer(b64str: string) {
+  const byteStr = atob(b64str);
+  const bytes = new Uint8Array(byteStr.length);
+  for (let i = 0; i < byteStr.length; i++) {
+    bytes[i] = byteStr.charCodeAt(i);
+  }
+  return bytes.buffer;
 }

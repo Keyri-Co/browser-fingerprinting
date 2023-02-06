@@ -40,6 +40,14 @@ ul > li:nth-child(even) {
 }
 
 .user_data {
-    margin: 0 20px;
-    padding: 10px 0px;
+    padding: 10px 20px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.user_data > * {
+    white-space: nowrap;
+    overflow: hidden;
+    word-break: break-all;
+    text-overflow: ellipsis;
 }
