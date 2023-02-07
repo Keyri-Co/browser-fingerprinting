@@ -51,3 +51,14 @@ ul > li:nth-child(even) {
     word-break: break-all;
     text-overflow: ellipsis;
 }
+
+#add-new-user-block {
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 100%;
+    gap: 20px;
+}
+
+#add-new-user {
+    min-width: 100px;
+}
