@@ -98,6 +98,10 @@ export class Device {
   buildID: string = this.unknownStringValue;
   javaEnabled: string = this.unknownStringValue;
   browserPermissions: string = this.unknownStringValue;
+  supportedAudioFormats: string = this.unknownStringValue;
+  supportedVideoFormats: string = this.unknownStringValue;
+  audioContext: string = this.unknownStringValue;
+  frequencyAnalyserProperties: string = this.unknownStringValue;
   private dbName: string = this.unknownStringValue;
   private storeName: string = this.unknownStringValue;
   private cryptoKeyId: string = this.unknownStringValue;
@@ -132,6 +136,7 @@ export class Device {
     this.gpu = paramToString(JSON.stringify(this.getVideoCardInfo()));
     this.gpuVendor = paramToString(this.getVideoCardInfo().vendor);
     this.gpuRenderer = paramToString(this.getVideoCardInfo().renderer);
+    this.supportedAudioFormats = paramToString(this.getSupportedAudioFormats());
 
     this.navigator = this.getNavigatorValues();
     this.appName = paramToString(navigator.appName);
@@ -158,6 +163,94 @@ export class Device {
     this.motionReduced = paramToString(this.isMotionReduced());
     this.math = paramToString(this.getMathFingerprint());
     this.architecture = paramToString(this.getArchitecture());
+    this.audioContext = paramToString(this.getAudioContextProperties());
+    this.frequencyAnalyserProperties = paramToString(this.getFrequencyAnalyserProperties());
+    this.supportedVideoFormats = paramToString(this.getSupportedVideoFormats());
+  }
+
+  private getFrequencyAnalyserProperties(): Record<string, string | number> {
+    const audioCtx = new AudioContext();
+    const analyser = audioCtx.createAnalyser();
+
+    analyser.fftSize = 2048;
+    const bufferLength = analyser.frequencyBinCount;
+    const dataArray = new Uint8Array(bufferLength);
+    analyser.getByteTimeDomainData(dataArray);
+
+    return {
+      channelCount: analyser.channelCount,
+      channelCountMode: analyser.channelCountMode,
+      channelInterpretation: analyser.channelInterpretation,
+      fftSize: analyser.fftSize,
+      frequencyBinCount: analyser.frequencyBinCount,
+      maxDecibels: analyser.maxDecibels,
+      minDecibels: analyser.minDecibels,
+      numberOfInputs: analyser.numberOfInputs,
+      numberOfOutputs: analyser.numberOfOutputs,
+      smoothingTimeConstant: analyser.smoothingTimeConstant,
+    };
+  }
+  private getAudioContextProperties(): Record<string, string | number> {
+    if (!isBrowser()) return {};
+    const audioCtx = new AudioContext();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    return {
+      channelCount: oscillator.channelCount,
+      channelCountMode: oscillator.channelCountMode,
+      channelInterpretation: oscillator.channelInterpretation,
+      maxChannelCount: audioCtx.destination.maxChannelCount,
+      numberOfInputs: audioCtx.destination.numberOfInputs,
+      numberOfOutputs: audioCtx.destination.numberOfOutputs,
+      sampleRate: audioCtx.sampleRate,
+      state: audioCtx.state,
+    };
+  }
+
+  private getSupportedVideoFormats(): Record<string, string> {
+    if (!isBrowser()) return {};
+
+    const formats = [
+      'video/ogg; codecs="theora"',
+      'video/mp4; codecs="avc1.42E01E"',
+      'video/webm; codecs="vp8, vorbis"',
+      'video/webm; codecs="vp9"',
+      'application/x-mpegURL; codecs="avc1.42E01E"',
+      'video/mp4; codecs="flac"',
+      'video/ogg; codecs="opus"',
+      'video/webm; codecs="vp9, opus"',
+    ];
+
+    const video = document.createElement('video');
+    const resultSupport: Record<string, string> = {}
+    formats.forEach(format => resultSupport[format] = video.canPlayType(format));
+    return resultSupport
+  }
+
+  private getSupportedAudioFormats(): Record<string, string> {
+    if (!isBrowser()) return {};
+    const audioFormats = [
+      'audio/aac',
+      'audio/flac',
+      'audio/mpeg',
+      'audio/mp4; codecs="mp4a.40.2"',
+      'audio/ogg; codecs="flac"',
+      'audio/ogg; codecs="vorbis"',
+      'audio/ogg; codecs="opus"',
+      'audio/wav; codecs="1"',
+      'audio/webm; codecs="vorbis"',
+      'audio/webm; codecs="opus"',
+    ];
+
+    // Create an audio element so we can use the canPlayType method
+    const audio = document.createElement('audio');
+    const resultSupport: Record<string, string> = {};
+    audioFormats.forEach((format) => (resultSupport[format] = audio.canPlayType(format)));
+    return resultSupport;
   }
 
   private async getBrowserPermissions(): Promise<Record<string, string>> {
@@ -420,7 +513,7 @@ export class Device {
       openDatabase: this.openDatabase,
       cpuClass: this.cpuClass,
       plugins: this.plugins,
-      canvas: this.canvas,
+      // canvas: this.canvas, ** Temporary removed from fingerprint (mobile differences in rendering the same image) **
       vendorFlavors: this.vendorFlavors,
       monochromeDepth: this.monochromeDepth,
       motionReduced: this.motionReduced,
@@ -432,6 +525,10 @@ export class Device {
       buildID: this.buildID,
       javaEnabled: this.javaEnabled,
       browserPermissions: this.browserPermissions,
+      supportedAudioFormats: this.supportedAudioFormats,
+      audioContext: this.audioContext,
+      frequencyAnalyserProperties: this.frequencyAnalyserProperties,
+      supportedVideoFormats: this.supportedVideoFormats,
     };
   }
 
