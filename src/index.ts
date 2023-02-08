@@ -92,6 +92,12 @@ export class Device {
   architecture: string = this.unknownStringValue;
   isPrivate: string = this.unknownStringValue;
   db: IndexDB | undefined;
+  adBlockers: string = this.unknownStringValue;
+  doNotTrack: string = this.unknownStringValue;
+  navigatorPropertiesCount: string = this.unknownStringValue;
+  buildID: string = this.unknownStringValue;
+  javaEnabled: string = this.unknownStringValue;
+  browserPermissions: string = this.unknownStringValue;
   private dbName: string = this.unknownStringValue;
   private storeName: string = this.unknownStringValue;
   private cryptoKeyId: string = this.unknownStringValue;
@@ -136,6 +142,10 @@ export class Device {
     this.product = paramToString(navigator.product);
     this.currentBrowserBuildNumber = paramToString(navigator.productSub);
     this.connection = paramToString(JSON.stringify((navigator as any).connection));
+    this.doNotTrack = paramToString(this.handleDoNotTrackValue(navigator.doNotTrack));
+    this.navigatorPropertiesCount = paramToString(this.convertNavigatorToNumber(navigator));
+    this.buildID = paramToString((navigator as any).buildID ? 'Supported' : 'Unsupported');
+    this.javaEnabled = paramToString(!!(navigator as any).enabled);
     this.sessionStorage = paramToString(this.getSessionStorage());
     this.localStorage = paramToString(this.getLocalStorage());
     this.indexedDB = paramToString(this.getIndexedDB());
@@ -148,6 +158,61 @@ export class Device {
     this.motionReduced = paramToString(this.isMotionReduced());
     this.math = paramToString(this.getMathFingerprint());
     this.architecture = paramToString(this.getArchitecture());
+  }
+
+  private async getBrowserPermissions(): Promise<Record<string, string>> {
+    if (!isBrowser) return {};
+    try {
+      const permissionsList = [
+        'accelerometer',
+        'camera',
+        'clipboard-read',
+        'clipboard-write',
+        'geolocation',
+        'background-sync',
+        'magnetometer',
+        'microphone',
+        'midi',
+        'notifications',
+        'payment-handler',
+        'persistent-storage',
+      ];
+      const navigator = window.navigator;
+      const results = (
+        await Promise.allSettled(
+          permissionsList.map(async (name: string) => {
+            return navigator.permissions.query({ name: name as any });
+          }),
+        )
+      )
+        .filter((promiseResult) => promiseResult.status === 'fulfilled')
+        .map((promiseResult: any) => promiseResult.value);
+
+      const permissionsObject: any = {};
+      results.forEach((permission) => (permissionsObject[permission.name] = permission.state));
+
+      return permissionsObject;
+    } catch (err) {
+      console.error(err);
+      return {};
+    }
+  }
+
+  private handleDoNotTrackValue(value: string | null) {
+    // navigator can return next values "yes", "no", "unspecified", "1", "0", null
+    if (value === 'yes' || value === '1') return true;
+    return false;
+  }
+
+  private convertNavigatorToNumber(navigator: Navigator) {
+    function getAllProps(obj: any, props = []): Array<any> {
+      if (Object.getPrototypeOf(obj) == null) {
+        return props;
+      }
+      return getAllProps(Object.getPrototypeOf(obj), props.concat(Object.getOwnPropertyNames(obj) as any));
+    }
+
+    return getAllProps(navigator).length;
   }
 
   private async getPreCachedCryptoCookie(): Promise<string | null> {
@@ -163,6 +228,33 @@ export class Device {
       const localStorageKey = localStorage.getItem(this.cryptoKeyId);
       return localStorageKey;
     }
+  }
+
+  private async adBlockUsing(): Promise<boolean> {
+    if (!isBrowser()) return false;
+    const body = document.querySelector('body');
+    const adTag = document.createElement('div'); //<div id="adTester" style="background-color: transparent; height: 1px; width: 1px;"></div>
+    adTag.setAttribute('id', 'adTester');
+    adTag.setAttribute('style', 'background-color: transparent; height: 1px; width: 1px;');
+    body!.appendChild(adTag);
+    return new Promise((resolve, reject) => {
+      window.addEventListener('load', async () => {
+        const adDivBlock = document.getElementById('adTester');
+        if (!adDivBlock || adDivBlock.clientHeight == 0) resolve(true);
+        try {
+          let test = new Request(
+            'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js',
+            // "https://static.ads-twitter.com/uwt.js",
+            { method: 'HEAD', mode: 'no-cors' },
+          );
+
+          await fetch(test);
+        } catch (err) {
+          resolve(true);
+        }
+        resolve(false);
+      });
+    });
   }
 
   private async getB64KeysFromKeyPair(cryptoKey: CryptoKeyPair) {
@@ -248,13 +340,15 @@ export class Device {
   async load() {
     try {
       const storeName = this.storeName;
-      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, ...other] = await Promise.all([
+      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, adBlockers, browserPermissions, ...other] = await Promise.all([
         this.getFonts(),
         this.getDomBlockers(),
         this.getFontPreferences(),
         this.getAudioFingerprint(),
         this.getRoundedScreenFrame(),
         this.isIncognitoMode(),
+        this.adBlockUsing(),
+        this.getBrowserPermissions(),
         this.db
           ?.connect(this.dbName, 1, function (this, event) {
             let db = this.result;
@@ -266,6 +360,8 @@ export class Device {
             console.error('IndexDB not allowed in private mode: ', err.message);
           }),
       ]);
+      this.browserPermissions = paramToString(browserPermissions);
+      this.adBlockers = paramToString(adBlockers);
       this.isPrivate = paramToString(incognitoMode.isIncognito);
       this.fonts = paramToString(fonts);
       this.domBlockers = paramToString(domBlockers);
@@ -330,6 +426,12 @@ export class Device {
       motionReduced: this.motionReduced,
       math: this.math,
       architecture: this.architecture,
+      adBlockers: this.adBlockers,
+      doNotTrack: this.doNotTrack,
+      navigatorPropertiesCount: this.navigatorPropertiesCount,
+      buildID: this.buildID,
+      javaEnabled: this.javaEnabled,
+      browserPermissions: this.browserPermissions,
     };
   }
 
@@ -592,7 +694,7 @@ export class Device {
   private async getDomBlockers(): Promise<string[] | undefined> {
     try {
       if (!this.isDomBlockersApplicable()) {
-        return undefined;
+        return [];
       }
 
       const filters = getFilters();
