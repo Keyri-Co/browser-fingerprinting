@@ -102,6 +102,10 @@ export class Device {
   supportedVideoFormats: string = this.unknownStringValue;
   audioContext: string = this.unknownStringValue;
   frequencyAnalyserProperties: string = this.unknownStringValue;
+  accelerometer: string = this.unknownStringValue;
+  gyroscope: string = this.unknownStringValue;
+  proximitySensor: string = this.unknownStringValue;
+  battery: string = this.unknownStringValue;
   private dbName: string = this.unknownStringValue;
   private storeName: string = this.unknownStringValue;
   private cryptoKeyId: string = this.unknownStringValue;
@@ -146,7 +150,7 @@ export class Device {
     this.appCodeName = paramToString(navigator.appCodeName);
     this.product = paramToString(navigator.product);
     this.currentBrowserBuildNumber = paramToString(navigator.productSub);
-    this.connection = paramToString(JSON.stringify((navigator as any).connection));
+    this.connection = paramToString(JSON.stringify(this.getConnectionParams(navigator)));
     this.doNotTrack = paramToString(this.handleDoNotTrackValue(navigator.doNotTrack));
     this.navigatorPropertiesCount = paramToString(this.convertNavigatorToNumber(navigator));
     this.buildID = paramToString((navigator as any).buildID ? 'Supported' : 'Unsupported');
@@ -166,6 +170,81 @@ export class Device {
     this.audioContext = paramToString(this.getAudioContextProperties());
     this.frequencyAnalyserProperties = paramToString(this.getFrequencyAnalyserProperties());
     this.supportedVideoFormats = paramToString(this.getSupportedVideoFormats());
+  }
+
+  private getConnectionParams(navigator: any): { downlink?: number; effectiveType?: string; rtt?: number } {
+    if (!isBrowser) return {};
+    return {
+      downlink: navigator.connection.downlink,
+      effectiveType: navigator.connection.effectiveType,
+      rtt: navigator.connection.rtt,
+    };
+  }
+
+  private async isProximitySensorSupport() {
+    if (!isBrowser()) return false;
+    return new Promise((resolve, reject) => {
+      if ('ondeviceproximity' in window) {
+        window.addEventListener('deviceproximity', function (event) {
+          resolve(!!event);
+        });
+      } else {
+        resolve(false);
+      }
+      setTimeout(() => {
+        resolve(false);
+      }, 0);
+    });
+  }
+
+  private async isAccelerometerSupport(): Promise<boolean> {
+    if (!isBrowser()) return false;
+    return new Promise((resolve, reject) => {
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener(
+          'deviceorientation',
+          (event) => {
+            resolve(!!event); // will be either null or with event data
+          },
+          false,
+        );
+      } else {
+        resolve(false);
+      }
+      setTimeout(() => {
+        resolve(false);
+      }, 0);
+    });
+  }
+
+  private async isGyroscopeSupport(): Promise<boolean> {
+    if (!isBrowser()) return false;
+    return new Promise((resolve, reject) => {
+      if (window.DeviceOrientationEvent) {
+        window.addEventListener(
+          'devicemotion',
+          (event) => {
+            resolve(!!event); // will be either null or with event data
+          },
+          false,
+        );
+      } else {
+        resolve(false);
+      }
+      setTimeout(() => {
+        resolve(false);
+      }, 0);
+    });
+  }
+
+  private async getBatteryInfo(): Promise<{ charging: boolean; chargingTime: number; dischargingTime: number; level: number }> {
+    const battery = await (navigator as any).getBattery();
+    return {
+      charging: battery.charging,
+      chargingTime: battery.chargingTime,
+      dischargingTime: battery.dischargingTime,
+      level: battery.level,
+    };
   }
 
   private getFrequencyAnalyserProperties(): Record<string, string | number> {
@@ -226,9 +305,9 @@ export class Device {
     ];
 
     const video = document.createElement('video');
-    const resultSupport: Record<string, string> = {}
-    formats.forEach(format => resultSupport[format] = video.canPlayType(format));
-    return resultSupport
+    const resultSupport: Record<string, string> = {};
+    formats.forEach((format) => (resultSupport[format] = video.canPlayType(format)));
+    return resultSupport;
   }
 
   private getSupportedAudioFormats(): Record<string, string> {
@@ -433,7 +512,21 @@ export class Device {
   async load() {
     try {
       const storeName = this.storeName;
-      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, adBlockers, browserPermissions, ...other] = await Promise.all([
+      const [
+        fonts,
+        domBlockers,
+        fontPreferences,
+        audioFingerprint,
+        screenFrame,
+        incognitoMode,
+        adBlockers,
+        browserPermissions,
+        accelerometer,
+        gyroscope,
+        proximitySensor,
+        battery,
+        ...other
+      ] = await Promise.all([
         this.getFonts(),
         this.getDomBlockers(),
         this.getFontPreferences(),
@@ -442,6 +535,10 @@ export class Device {
         this.isIncognitoMode(),
         this.adBlockUsing(),
         this.getBrowserPermissions(),
+        this.isAccelerometerSupport(),
+        this.isGyroscopeSupport(),
+        this.isProximitySensorSupport(),
+        this.getBatteryInfo(),
         this.db
           ?.connect(this.dbName, 1, function (this, event) {
             let db = this.result;
@@ -453,6 +550,10 @@ export class Device {
             console.error('IndexDB not allowed in private mode: ', err.message);
           }),
       ]);
+      this.battery = paramToString(battery);
+      this.accelerometer = paramToString(accelerometer);
+      this.gyroscope = paramToString(gyroscope);
+      this.proximitySensor = paramToString(proximitySensor);
       this.browserPermissions = paramToString(browserPermissions);
       this.adBlockers = paramToString(adBlockers);
       this.isPrivate = paramToString(incognitoMode.isIncognito);
@@ -529,6 +630,9 @@ export class Device {
       audioContext: this.audioContext,
       frequencyAnalyserProperties: this.frequencyAnalyserProperties,
       supportedVideoFormats: this.supportedVideoFormats,
+      accelerometer: this.accelerometer,
+      gyroscope: this.gyroscope,
+      proximitySensor: this.proximitySensor,
     };
   }
 
