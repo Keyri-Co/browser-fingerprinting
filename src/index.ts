@@ -102,9 +102,6 @@ export class Device {
   supportedVideoFormats: string = this.unknownStringValue;
   audioContext: string = this.unknownStringValue;
   frequencyAnalyserProperties: string = this.unknownStringValue;
-  accelerometer: string = this.unknownStringValue;
-  gyroscope: string = this.unknownStringValue;
-  proximitySensor: string = this.unknownStringValue;
   battery: string = this.unknownStringValue;
   private dbName: string = this.unknownStringValue;
   private storeName: string = this.unknownStringValue;
@@ -179,62 +176,6 @@ export class Device {
       effectiveType: navigator.connection.effectiveType,
       rtt: navigator.connection.rtt,
     };
-  }
-
-  private async isProximitySensorSupport() {
-    if (!isBrowser()) return false;
-    return new Promise((resolve, reject) => {
-      if ('ondeviceproximity' in window) {
-        window.addEventListener('deviceproximity', function (event) {
-          resolve(!!event);
-        });
-      } else {
-        resolve(false);
-      }
-      setTimeout(() => {
-        resolve(false);
-      }, 0);
-    });
-  }
-
-  private async isAccelerometerSupport(): Promise<boolean> {
-    if (!isBrowser()) return false;
-    return new Promise((resolve, reject) => {
-      if (window.DeviceOrientationEvent) {
-        window.addEventListener(
-          'deviceorientation',
-          (event) => {
-            resolve(!!event); // will be either null or with event data
-          },
-          false,
-        );
-      } else {
-        resolve(false);
-      }
-      setTimeout(() => {
-        resolve(false);
-      }, 0);
-    });
-  }
-
-  private async isGyroscopeSupport(): Promise<boolean> {
-    if (!isBrowser()) return false;
-    return new Promise((resolve, reject) => {
-      if (window.DeviceOrientationEvent) {
-        window.addEventListener(
-          'devicemotion',
-          (event) => {
-            resolve(!!event); // will be either null or with event data
-          },
-          false,
-        );
-      } else {
-        resolve(false);
-      }
-      setTimeout(() => {
-        resolve(false);
-      }, 0);
-    });
   }
 
   private async getBatteryInfo(): Promise<{ charging: boolean; chargingTime: number; dischargingTime: number; level: number }> {
@@ -521,9 +462,6 @@ export class Device {
         incognitoMode,
         adBlockers,
         browserPermissions,
-        accelerometer,
-        gyroscope,
-        proximitySensor,
         battery,
         ...other
       ] = await Promise.all([
@@ -535,9 +473,6 @@ export class Device {
         this.isIncognitoMode(),
         this.adBlockUsing(),
         this.getBrowserPermissions(),
-        this.isAccelerometerSupport(),
-        this.isGyroscopeSupport(),
-        this.isProximitySensorSupport(),
         this.getBatteryInfo(),
         this.db
           ?.connect(this.dbName, 1, function (this, event) {
@@ -551,9 +486,6 @@ export class Device {
           }),
       ]);
       this.battery = paramToString(battery);
-      this.accelerometer = paramToString(accelerometer);
-      this.gyroscope = paramToString(gyroscope);
-      this.proximitySensor = paramToString(proximitySensor);
       this.browserPermissions = paramToString(browserPermissions);
       this.adBlockers = paramToString(adBlockers);
       this.isPrivate = paramToString(incognitoMode.isIncognito);
@@ -630,9 +562,6 @@ export class Device {
       audioContext: this.audioContext,
       frequencyAnalyserProperties: this.frequencyAnalyserProperties,
       supportedVideoFormats: this.supportedVideoFormats,
-      accelerometer: this.accelerometer,
-      gyroscope: this.gyroscope,
-      proximitySensor: this.proximitySensor,
     };
   }
 
