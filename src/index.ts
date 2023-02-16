@@ -531,7 +531,7 @@ export class Device {
       osInfo: this.osInfo,
       osCpu: this.osCpu,
       hardwareConcurrency: this.hardwareConcurrency,
-      screenFrame: this.screenFrame,
+      //screenFrame: this.screenFrame, ** removed because this field depends on browser window size
       screenColorDepth: this.screenColorDepth,
       colorGamut: this.colorGamut,
       currentBrowserBuildNumber: this.currentBrowserBuildNumber,
