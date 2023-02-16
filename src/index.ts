@@ -548,7 +548,7 @@ export class Device {
       deviceColorsForced: this.deviceColorsForced,
       usingHDR: this.usingHDR,
       colorsInverted: this.colorsInverted,
-      connection: this.connection,
+      //connection: this.connection, ** removed because this fields very depends on internet connection
       audioFingerprint: this.audioFingerprint,
       sessionStorage: this.sessionStorage,
       localStorage: this.localStorage,
