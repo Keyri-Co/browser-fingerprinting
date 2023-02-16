@@ -172,20 +172,30 @@ export class Device {
   private getConnectionParams(navigator: any): { downlink?: number; effectiveType?: string; rtt?: number } {
     if (!isBrowser) return {};
     return {
-      downlink: navigator.connection.downlink,
-      effectiveType: navigator.connection.effectiveType,
-      rtt: navigator.connection.rtt,
+      downlink: navigator.connection?.downlink,
+      effectiveType: navigator.connection?.effectiveType,
+      rtt: navigator.connection?.rtt,
     };
   }
 
   private async getBatteryInfo(): Promise<{ charging: boolean; chargingTime: number; dischargingTime: number; level: number }> {
-    const battery = await (navigator as any).getBattery();
-    return {
-      charging: battery.charging,
-      chargingTime: battery.chargingTime,
-      dischargingTime: battery.dischargingTime,
-      level: battery.level,
-    };
+    try {
+      const battery = await (navigator as any).getBattery();
+      return {
+        charging: battery.charging,
+        chargingTime: battery.chargingTime,
+        dischargingTime: battery.dischargingTime,
+        level: battery.level,
+      };
+    } catch (err: any) {
+      console.error(err.message);
+      return {
+        charging: false,
+        chargingTime: 0,
+        dischargingTime: 0,
+        level: 0,
+      };
+    }
   }
 
   private getFrequencyAnalyserProperties(): Record<string, string | number> {
