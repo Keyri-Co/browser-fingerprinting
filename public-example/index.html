@@ -119,7 +119,7 @@
           async function addFingerprintUser() {
             const deviceParams = device.getMainParams();
             const devicehash = device.createFingerprintHash();
-            const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-user`, {
+            const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-device`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
