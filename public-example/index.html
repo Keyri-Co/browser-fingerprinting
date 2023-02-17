@@ -10,22 +10,16 @@
   </head>
   <body>
     <h2 class="title">Info about device</h2>
-    <ul id="constants_info"></ul>
-
-    <div class="user_data">
-      <h3>Fingerprint Data</h3>
-      <h5 id="device_hash"></h5>
-      <h5 id="crypto_cookie"></h5>
-      <h5 id="tls_fingerprint"></h5>
-      <h5 id="user_exists"></h5>
-      <h5 id="user_name"></h5>
-      <h5 id="last-visit">Recently visited from ip:</h5>
-      <div id="add-new-user-block" style="display: none">
-        Add new user with name: <input type="text" id="name" />
-        <button id="add-new-user">Add</button>
+    <div id="main">
+      <div class="user_data">
+        <h3>Fingerprint Data:</h3>
+        <ul id="fingerprint-data"></ul>
+      </div>
+      <div class="recently-visited">
+        <h3 id="last-visit">Recently visited from ip:</h3>
+        <div id="visits"></div>
       </div>
     </div>
-
     <script>
       const localBaseURL = 'http://localhost:8000';
       const devBaseURL = 'https://dev-api.keyri.co';
@@ -55,111 +49,112 @@
         })
         .then(async (value) => {
           const deviceFingerPrint = device.createFingerprintHash();
-          const cryptoCookie = await device.initCryptoCookie().catch((err) => console.log(err.message));
+          const cryptocookie = await device.initCryptoCookie().catch((err) => console.log(err.message));
 
-          function printListIntoHTML(objectList, elem) {
+          function printListIntoHTML(itemList, elem) {
             const elemBox = document.getElementById(elem);
-            Object.keys(objectList).forEach((key) => {
+            itemList.forEach((key) => {
               const listElem = document.createElement('li');
-              const text = document.createTextNode(`${key}: ${objectList[key]}`);
-              listElem.appendChild(text);
+              const tooltip = document.createElement('span');
+              const mainData = document.createElement('div');
+              tooltip.appendChild(document.createTextNode(key.value));
+              tooltip.classList.add('tooltiptext');
+              listElem.classList.add('tooltip');
+              const text = document.createTextNode(`${key.title}: ${key.value}`);
+              mainData.appendChild(text);
+              listElem.appendChild(mainData);
+              listElem.appendChild(tooltip);
               elemBox.appendChild(listElem);
             });
           }
 
-          const mainParams = device.getMainParams();
-          mainParams.isPrivate = device.isPrivate;
-          mainParams.battery = device.battery;
-          printListIntoHTML(mainParams, 'constants_info');
-
           function setExistUserData(data) {
-            const addNewUserBlock = document.getElementById('add-new-user-block');
-            if (!data || !data.name) {
-              addNewUserBlock.style.display = 'flex';
-              return;
+            if (!data) {
+              throw new Error('Device data not found');
             }
-            if (!!data.name) {
-              const userNameBlock = document.getElementById('user_name');
-              userNameBlock.innerText = `User Name from Fingerprint Table: ${data.name}`;
-              addNewUserBlock.style.display = 'none';
-            }
+            const fingerprintData = [
+              { title: 'User Previously Existed?', value: data.existedUser },
+              { title: 'TLS Fingerprint', value: data.tlsFingerprint },
+            ];
 
-            const tlsFingerprintBlock = document.getElementById('tls_fingerprint');
-            tlsFingerprintBlock.innerText = `TLS Fingerprint: ${data.tlsFingerprint}`;
-
-            const userExistBlock = document.getElementById('user_exists');
-            userExistBlock.innerText = `User Previously Existed?: ${!!data.name}`;
+            printListIntoHTML(fingerprintData, 'fingerprint-data');
 
             if (data.visits.length > 0) {
               let visits = data.visits;
-              const lastVisit = visits.sort((a, b) => b.time - a.time)[0];
-              const visitsBlock = document.getElementById('last-visit');
-              const list = document.createElement('ul');
-              const {
-                ip,
-                location: { city, country },
-                timestamp,
-              } = lastVisit;
-              const result = { ip, city, country, timestamp };
-              Object.keys(result).forEach((key) => {
-                const block = document.createElement('li');
-                block.innerText = `${key}: ${result[key]}`;
-                list.appendChild(block);
+              const sortedVisits = visits.sort((a, b) => b.time - a.time);
+              const visitsBlock = document.getElementById('visits');
+              const visitsArray = sortedVisits.slice(0,10).map((visit) => ({
+                ip: visit.ip,
+                city: visit.location.city,
+                country: visit.location.country,
+                timestamp: visit.timestamp,
+              }));
+              visitsArray.forEach((visitObject) => {
+                const visitList = document.createElement('ul');
+                visitList.classList.add('visit-object');
+                Object.keys(visitObject).forEach((key) => {
+                  const block = document.createElement('li');
+                  block.innerText = `${key}: ${visitObject[key]}`;
+                  visitList.appendChild(block);
+                });
+                visitsBlock.appendChild(visitList);
               });
-
-              visitsBlock.appendChild(list);
             }
             return data;
           }
 
-          async function getFingerprintData(deviceHash) {
+          async function getFingerprintData() {
             const fingerprintData = await fetch(`${baseUrl}/fingerprint/me`, {
               method: 'GET',
               headers: {
                 accept: 'application/json',
-                deviceHash,
-                cryptoCookie,
+                devicehash: deviceFingerPrint,
+                cryptocookie,
               },
             });
 
             return fingerprintData.json();
           }
 
-          async function addFingerprintUser(device, name) {
+          async function addFingerprintUser() {
             const deviceParams = device.getMainParams();
-            const deviceHash = device.createFingerprintHash();
+            const devicehash = device.createFingerprintHash();
             const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-user`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                deviceHash,
-                name,
+                devicehash,
                 deviceParams,
-                cryptoCookie,
+                cryptocookie,
               }),
             });
 
             return fingerprintData.json();
           }
 
-          document.getElementById('add-new-user').addEventListener('click', async () => {
-            const input = document.getElementById('name').value;
-            if (!input) alert('Input correct name');
-            const result = await addFingerprintUser(device, input);
-            setExistUserData(result.data);
-          });
+          getFingerprintData()
+            .then(async ({ data: result }) => {
+              if (!result) {
+                const { data } = await addFingerprintUser();
+                return setExistUserData(data);
+              }
+              return setExistUserData(result);
+            })
+            .catch((err) => {
+              console.log(err.message);
+              const fingerprintData = [{ title: 'User Previously Existed?', value: false }];
 
-          getFingerprintData(deviceFingerPrint)
-            .then(async ({ data }) => {
-              return setExistUserData(data);
+              printListIntoHTML(fingerprintData, 'fingerprint-data');
             })
             .finally(() => {
-              const deviceHashBlock = document.getElementById('device_hash');
-              deviceHashBlock.innerText = `Device hash: ${deviceFingerPrint}`;
-              const cryptoCookieHashBlock = document.getElementById('crypto_cookie');
-              cryptoCookieHashBlock.innerText = `Cookie hash: ${cryptoCookie}`;
+              const fingerprintData = [
+                { title: 'Device Fingerprint', value: deviceFingerPrint },
+                { title: 'Crypto Cookie', value: cryptocookie },
+              ];
+
+              printListIntoHTML(fingerprintData, 'fingerprint-data');
             });
         });
     </script>

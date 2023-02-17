@@ -1,7 +1,12 @@
-html, body, div {
+html, body, div, ul {
     margin: 0;
     padding: 0;
     font-family: 'Arial';
+    font-size: 14px;
+}
+
+h3 {
+    font-weight: 400;
 }
 
 body {
@@ -12,17 +17,7 @@ body {
     text-align: center;
 }
 
-#constants_info, #changed_info {
-    list-style: none;
-    margin: 0 20px;
-    padding: 0;
-}
-
-#last-visit > ul {
-    padding: 0;
-}
-
-ul > li {
+ul > li > div {
     padding: 10px 20px;
     word-break: break-all;
     text-overflow: ellipsis;
@@ -32,33 +27,113 @@ ul > li {
 
 ul > li:nth-child(odd) {
     background-color: #e0e0e0;
-    border-bottom: 1px solid #000;
 }
 
 ul > li:nth-child(even) {
     border-right: 1px solid #000;
+    border-left: 1px solid #000;
+    border-bottom: 1px solid #000;
 }
 
 .user_data {
     padding: 10px 20px;
-    width: 100%;
+    width: 50%;
+    min-width: 400px;
     box-sizing: border-box;
 }
 
 .user_data > * {
     white-space: nowrap;
-    overflow: hidden;
     word-break: break-all;
     text-overflow: ellipsis;
 }
 
-#add-new-user-block {
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 100%;
-    gap: 20px;
+.recently-visited {
+    padding: 10px 20px;
+    width: 50%;
+    min-width: 400px;
+    box-sizing: border-box;
 }
 
-#add-new-user {
-    min-width: 100px;
+#main {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.visit-object {
+    list-style: none;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.visit-object > li {
+    padding: 5px 3px;
+}
+
+.visit-object > li:first-child {
+    border-radius: 6px 6px 0px 0px;
+}
+
+.visit-object > li:last-child {
+    border-radius: 0px 0px 6px 6px;
+}
+
+#fingerprint-data > li:first-child {
+    border-radius: 10px 10px 0px 0px;
+}
+
+#fingerprint-data > li:last-child {
+    border-radius: 0px 0px 10px 10px;
+}
+
+/* Tooltip container */
+.tooltip {
+    position: relative;
+    display: block;
+}
+
+/* Tooltip text */
+.tooltip .tooltiptext {
+    visibility: hidden;
+    //width: 120px;
+    background-color: #555;
+    color: #fff;
+    text-align: center;
+    padding: 5px 3px;
+    border-radius: 6px;
+
+    /* Position the tooltip text */
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 0;
+    margin-left: 0px;
+
+    /* Fade in tooltip */
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+/* Tooltip arrow */
+.tooltip .tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 11px;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #555 transparent transparent transparent;
+}
+
+/* Show the tooltip text when you mouse over the tooltip container */
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+@media (max-width: 800px) {
+    #main {
+        justify-content: center;
+    }
 }

@@ -548,7 +548,6 @@ export class Device {
       deviceColorsForced: this.deviceColorsForced,
       usingHDR: this.usingHDR,
       colorsInverted: this.colorsInverted,
-      //connection: this.connection, ** removed because this fields very depends on internet connection
       audioFingerprint: this.audioFingerprint,
       sessionStorage: this.sessionStorage,
       localStorage: this.localStorage,
@@ -556,7 +555,6 @@ export class Device {
       openDatabase: this.openDatabase,
       cpuClass: this.cpuClass,
       plugins: this.plugins,
-      // canvas: this.canvas, ** Temporary removed from fingerprint (mobile differences in rendering the same image) **
       vendorFlavors: this.vendorFlavors,
       monochromeDepth: this.monochromeDepth,
       motionReduced: this.motionReduced,
@@ -572,6 +570,10 @@ export class Device {
       audioContext: this.audioContext,
       frequencyAnalyserProperties: this.frequencyAnalyserProperties,
       supportedVideoFormats: this.supportedVideoFormats,
+      // canvas: this.canvas, ** Temporary removed from fingerprint (mobile differences in rendering the same image) **
+      // isPrivate: this.isPrivate, ** would be different on the same device
+      // battery: this.battery, ** would be different on the same device
+      // connection: this.connection, ** removed because this fields very depends on internet connection
     };
   }
 
