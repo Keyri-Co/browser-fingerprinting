@@ -189,12 +189,14 @@ export class Device {
       };
     } catch (err: any) {
       console.error(err.message);
-      return {
-        charging: false,
-        chargingTime: 0,
-        dischargingTime: 0,
-        level: 0,
-      };
+      return new Promise((resolve, reject) =>
+        resolve({
+          charging: false,
+          chargingTime: 0,
+          dischargingTime: 0,
+          level: 0,
+        }),
+      );
     }
   }
 
@@ -283,7 +285,7 @@ export class Device {
     return resultSupport;
   }
 
-  private async getBrowserPermissions(): Promise<Record<string, string>> {
+  private async getBrowserPermissions(): Promise<Record<string, string> | undefined> {
     if (!isBrowser) return {};
     try {
       const permissionsList = [
@@ -316,8 +318,7 @@ export class Device {
 
       return permissionsObject;
     } catch (err) {
-      console.error(err);
-      return {};
+      return new Promise((resolve, reject) => resolve(undefined));
     }
   }
 
@@ -463,38 +464,28 @@ export class Device {
   async load() {
     try {
       const storeName = this.storeName;
-      const [
-        fonts,
-        domBlockers,
-        fontPreferences,
-        audioFingerprint,
-        screenFrame,
-        incognitoMode,
-        adBlockers,
-        browserPermissions,
-        battery,
-        ...other
-      ] = await Promise.all([
-        this.getFonts(),
-        this.getDomBlockers(),
-        this.getFontPreferences(),
-        this.getAudioFingerprint(),
-        this.getRoundedScreenFrame(),
-        this.isIncognitoMode(),
-        this.adBlockUsing(),
-        this.getBrowserPermissions(),
-        this.getBatteryInfo(),
-        this.db
-          ?.connect(this.dbName, 1, function (this, event) {
-            let db = this.result;
-            if (!db.objectStoreNames.contains(storeName)) {
-              db.createObjectStore(storeName, { keyPath: 'id' });
-            }
-          })
-          .catch((err) => {
-            console.error('IndexDB not allowed in private mode: ', err.message);
-          }),
-      ]);
+      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, adBlockers, browserPermissions, battery, ...other] =
+        await Promise.all([
+          this.getFonts(),
+          this.getDomBlockers(),
+          this.getFontPreferences(),
+          this.getAudioFingerprint(),
+          this.getRoundedScreenFrame(),
+          this.isIncognitoMode(),
+          this.adBlockUsing(),
+          this.getBrowserPermissions(),
+          this.getBatteryInfo(),
+          this.db
+            ?.connect(this.dbName, 1, function (this, event) {
+              let db = this.result;
+              if (!db.objectStoreNames.contains(storeName)) {
+                db.createObjectStore(storeName, { keyPath: 'id' });
+              }
+            })
+            .catch((err) => {
+              console.error('IndexDB not allowed in private mode: ', err.message);
+            }),
+        ]);
       this.battery = paramToString(battery);
       this.browserPermissions = paramToString(browserPermissions);
       this.adBlockers = paramToString(adBlockers);
@@ -506,6 +497,7 @@ export class Device {
       this.screenFrame = paramToString(screenFrame);
       return this;
     } catch (err: any) {
+      console.error(`Error load async params: ${err.message}`);
       return this;
     }
   }
@@ -795,7 +787,7 @@ export class Device {
         return fontList.filter((font) => isFontAvailable(fontsSpans[font]));
       });
     } catch (err) {
-      return new Promise(() => undefined);
+      return new Promise((resolve, reject) => resolve(undefined));
     }
   }
 
@@ -853,7 +845,7 @@ export class Device {
 
       return activeBlockers;
     } catch (err) {
-      return new Promise(() => undefined);
+      return new Promise((resolve, reject) => resolve(undefined));
     }
   }
 
@@ -941,7 +933,7 @@ export class Device {
         return sizes;
       });
     } catch (err) {
-      return new Promise(() => undefined);
+      return new Promise((resolve, reject) => resolve(undefined));
     }
   }
 
@@ -1071,7 +1063,7 @@ export class Device {
       await finishRendering();
       return fingerprintPromise;
     } catch (err) {
-      return new Promise(() => undefined);
+      return new Promise((resolve, reject) => resolve(0));
     }
   }
 
@@ -1430,7 +1422,7 @@ export class Device {
       // In fact, such code is used to avoid TypeScript issues without using `as`.
       return [processSize(frameSize[0]), processSize(frameSize[1]), processSize(frameSize[2]), processSize(frameSize[3])];
     } catch (err) {
-      return new Promise(() => [null, null, null, null]);
+      return new Promise((resolve, reject) => resolve([null, null, null, null]));
     }
   }
 
@@ -1523,25 +1515,29 @@ export class Device {
     };
   }
 
-  private async isIncognitoMode(): Promise<{ browserName: string; isIncognito: boolean }> {
-    if (!isBrowser()) return { browserName: 'nodejs', isIncognito: false };
-    let browserName = 'Unknown';
-    let result: boolean = false;
-    if (isSafari()) {
-      browserName = 'Safari';
-      result = await safariPrivateTest();
-    } else if (isChrome()) {
-      browserName = identifyChromium();
-      result = await chromePrivateTest();
-    } else if (isFirefox()) {
-      browserName = 'Firefox';
-      result = firefoxPrivateTest();
-    } else if (isMSIE()) {
-      browserName = 'Internet Explorer';
-      result = msiePrivateTest();
-    } else {
-      throw new Error('detectIncognito cannot determine the browser');
+  private async isIncognitoMode(): Promise<{ browserName?: string; isIncognito?: boolean }> {
+    try {
+      if (!isBrowser()) return { browserName: 'nodejs', isIncognito: false };
+      let browserName = 'Unknown';
+      let result: boolean = false;
+      if (isSafari()) {
+        browserName = 'Safari';
+        result = await safariPrivateTest();
+      } else if (isChrome()) {
+        browserName = identifyChromium();
+        result = await chromePrivateTest();
+      } else if (isFirefox()) {
+        browserName = 'Firefox';
+        result = firefoxPrivateTest();
+      } else if (isMSIE()) {
+        browserName = 'Internet Explorer';
+        result = msiePrivateTest();
+      } else {
+        throw new Error('detectIncognito cannot determine the browser');
+      }
+      return { browserName, isIncognito: result };
+    } catch (err: any) {
+      return new Promise((resolve, reject) => resolve({ browserName: undefined, isIncognito: undefined }));
     }
-    return { browserName, isIncognito: result };
   }
 }
