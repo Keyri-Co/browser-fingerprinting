@@ -111,9 +111,11 @@
                 devicehash: deviceFingerPrint,
                 cryptocookie,
               },
-            });
+            })
 
-            return fingerprintData.json();
+            const body = await fingerprintData.json();
+            if (!body.result) throw new Error(body.error.message);
+            return body;
           }
 
           async function addFingerprintUser() {
@@ -136,14 +138,13 @@
 
           getFingerprintData()
             .then(async ({ data: result }) => {
-              if (!result) {
+              if (!result || !result.tlsFingerprint) {
                 const { data } = await addFingerprintUser();
                 return setExistUserData(data);
               }
               return setExistUserData(result);
             })
             .catch((err) => {
-              console.log(err.message);
               const fingerprintData = [{ title: 'User Previously Existed?', value: false }];
 
               printListIntoHTML(fingerprintData, 'fingerprint-data');
