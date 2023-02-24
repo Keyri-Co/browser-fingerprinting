@@ -201,46 +201,56 @@ export class Device {
   }
 
   private getFrequencyAnalyserProperties(): Record<string, string | number> {
-    const audioCtx = new AudioContext();
-    const analyser = audioCtx.createAnalyser();
+    try {
+      const audioCtx = new AudioContext();
+      const analyser = audioCtx.createAnalyser();
 
-    analyser.fftSize = 2048;
-    const bufferLength = analyser.frequencyBinCount;
-    const dataArray = new Uint8Array(bufferLength);
-    analyser.getByteTimeDomainData(dataArray);
+      analyser.fftSize = 2048;
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+      analyser.getByteTimeDomainData(dataArray);
 
-    return {
-      channelCount: analyser.channelCount,
-      channelCountMode: analyser.channelCountMode,
-      channelInterpretation: analyser.channelInterpretation,
-      fftSize: analyser.fftSize,
-      frequencyBinCount: analyser.frequencyBinCount,
-      maxDecibels: analyser.maxDecibels,
-      minDecibels: analyser.minDecibels,
-      numberOfInputs: analyser.numberOfInputs,
-      numberOfOutputs: analyser.numberOfOutputs,
-      smoothingTimeConstant: analyser.smoothingTimeConstant,
-    };
+      return {
+        channelCount: analyser.channelCount,
+        channelCountMode: analyser.channelCountMode,
+        channelInterpretation: analyser.channelInterpretation,
+        fftSize: analyser.fftSize,
+        frequencyBinCount: analyser.frequencyBinCount,
+        maxDecibels: analyser.maxDecibels,
+        minDecibels: analyser.minDecibels,
+        numberOfInputs: analyser.numberOfInputs,
+        numberOfOutputs: analyser.numberOfOutputs,
+        smoothingTimeConstant: analyser.smoothingTimeConstant,
+      };
+    } catch (err: any) {
+      console.error('Audio Context error: ', err.message);
+      return {};
+    }
   }
   private getAudioContextProperties(): Record<string, string | number> {
     if (!isBrowser()) return {};
-    const audioCtx = new AudioContext();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
+    try {
+      const audioCtx = new AudioContext();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
 
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
 
-    return {
-      channelCount: oscillator.channelCount,
-      channelCountMode: oscillator.channelCountMode,
-      channelInterpretation: oscillator.channelInterpretation,
-      maxChannelCount: audioCtx.destination.maxChannelCount,
-      numberOfInputs: audioCtx.destination.numberOfInputs,
-      numberOfOutputs: audioCtx.destination.numberOfOutputs,
-      sampleRate: audioCtx.sampleRate,
-      state: audioCtx.state,
-    };
+      return {
+        channelCount: oscillator.channelCount,
+        channelCountMode: oscillator.channelCountMode,
+        channelInterpretation: oscillator.channelInterpretation,
+        maxChannelCount: audioCtx.destination.maxChannelCount,
+        numberOfInputs: audioCtx.destination.numberOfInputs,
+        numberOfOutputs: audioCtx.destination.numberOfOutputs,
+        sampleRate: audioCtx.sampleRate,
+        state: audioCtx.state,
+      };
+    } catch (err: any)  {
+      console.error('Audio Context Properties error: ', err.message);
+      return {};
+    }
   }
 
   private getSupportedVideoFormats(): Record<string, string> {
@@ -362,7 +372,7 @@ export class Device {
     adTag.setAttribute('style', 'background-color: transparent; height: 1px; width: 1px;');
     body!.appendChild(adTag);
     return new Promise((resolve, reject) => {
-      window.addEventListener('load', async () => {
+      const callback = async () => {
         const adDivBlock = document.getElementById('adTester');
         if (!adDivBlock || adDivBlock.clientHeight == 0) resolve(true);
         try {
@@ -377,7 +387,9 @@ export class Device {
           resolve(true);
         }
         resolve(false);
-      });
+      }
+      if (document.readyState === 'interactive' || document.readyState === 'complete') return callback();
+      window.addEventListener('load', callback);
     });
   }
 

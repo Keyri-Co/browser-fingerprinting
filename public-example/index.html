@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0" />
     <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <link rel="stylesheet" href="styles.css" />
-    <script src="index.js"></script>
     <title>Keyri Fingerprint Example Project</title>
   </head>
   <body>
@@ -17,10 +16,12 @@
       </div>
       <div class="recently-visited">
         <h3 id="last-visit">Recently visited from ip:</h3>
-        <div id="visits"></div>
+        <div id="events"></div>
       </div>
     </div>
     <script>
+      const localApiKey = 'dev_raB7SFWt27VoKqkPhaUrmWAsCJIO8Moj';
+      const developApiKey = 'raB7SFWt27VoKqkPhaUrmWAsCJIO8Moj';
       const localBaseURL = 'http://localhost:8000';
       const devBaseURL = 'https://dev-api.keyri.co';
       const environments = {
@@ -28,26 +29,33 @@
         development: 'DEVELOPMENT',
       };
       const currentEnv = environments.development;
+      let apiKey;
       let baseUrl;
 
       switch (currentEnv) {
         case environments.local:
+          apiKey = localApiKey;
           baseUrl = localBaseURL;
           break;
         case environments.development:
+          apiKey = developApiKey;
           baseUrl = devBaseURL;
           break;
         default:
+          apiKey = localApiKey;
           baseUrl = localBaseURL;
       }
 
-      const device = new Device();
-      device
-        .load()
+      const fpPromise = import(`${currentEnv}/fingerprint/pro?apiKey=${apiKey}`).then(async () => {
+        const device = new Device();
+        return device.load();
+      });
+
+      fpPromise
         .catch((err) => {
           console.error(err.message);
         })
-        .then(async (value) => {
+        .then(async (device) => {
           const deviceFingerPrint = device.createFingerprintHash();
           const cryptocookie = await device.initCryptoCookie().catch((err) => console.log(err.message));
 
@@ -79,25 +87,25 @@
 
             printListIntoHTML(fingerprintData, 'fingerprint-data');
 
-            if (data.visits.length > 0) {
-              let visits = data.visits;
-              const sortedVisits = visits.sort((a, b) => b.time - a.time);
-              const visitsBlock = document.getElementById('visits');
-              const visitsArray = sortedVisits.slice(0,10).map((visit) => ({
+            if (data.events.length > 0) {
+              let events = data.events;
+              const sortedEvents = events.sort((a, b) => b.time - a.time);
+              const eventsBlock = document.getElementById('events');
+              const eventsArray = sortedEvents.slice(0, 10).map((visit) => ({
                 ip: visit.ip,
                 city: visit.location.city,
                 country: visit.location.country,
-                timestamp: visit.timestamp,
+                timestamp: visit.createdAt,
               }));
-              visitsArray.forEach((visitObject) => {
-                const visitList = document.createElement('ul');
-                visitList.classList.add('visit-object');
-                Object.keys(visitObject).forEach((key) => {
+              eventsArray.forEach((eventObject) => {
+                const eventList = document.createElement('ul');
+                eventList.classList.add('event-object');
+                Object.keys(eventObject).forEach((key) => {
                   const block = document.createElement('li');
-                  block.innerText = `${key}: ${visitObject[key]}`;
-                  visitList.appendChild(block);
+                  block.innerText = `${key}: ${eventObject[key]}`;
+                  eventList.appendChild(block);
                 });
-                visitsBlock.appendChild(visitList);
+                eventsBlock.appendChild(eventList);
               });
             }
             return data;
@@ -107,11 +115,12 @@
             const fingerprintData = await fetch(`${baseUrl}/fingerprint/me`, {
               method: 'GET',
               headers: {
+                'api-key': apiKey,
                 accept: 'application/json',
                 devicehash: deviceFingerPrint,
                 cryptocookie,
               },
-            })
+            });
 
             const body = await fingerprintData.json();
             if (!body.result) throw new Error(body.error.message);
@@ -124,6 +133,7 @@
             const fingerprintData = await fetch(`${baseUrl}/fingerprint/new-device`, {
               method: 'POST',
               headers: {
+                'api-key': apiKey,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
@@ -140,9 +150,9 @@
             .then(async ({ data: result }) => {
               if (!result || !result.tlsFingerprint) {
                 const { data } = await addFingerprintUser();
-                return setExistUserData(data);
+                return setExistUserData({ ...data, existedUser: true });
               }
-              return setExistUserData(result);
+              return setExistUserData({ ...result, existedUser: false });
             })
             .catch((err) => {
               const fingerprintData = [{ title: 'User Previously Existed?', value: false }];

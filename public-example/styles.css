@@ -60,21 +60,21 @@ ul > li:nth-child(even) {
     flex-wrap: wrap;
 }
 
-.visit-object {
+.event-object {
     list-style: none;
     margin-bottom: 10px;
     border-radius: 6px;
 }
 
-.visit-object > li {
+.event-object > li {
     padding: 5px 3px;
 }
 
-.visit-object > li:first-child {
+.event-object > li:first-child {
     border-radius: 6px 6px 0px 0px;
 }
 
-.visit-object > li:last-child {
+.event-object > li:last-child {
     border-radius: 0px 0px 6px 6px;
 }
 
