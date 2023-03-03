@@ -46,7 +46,7 @@
           baseUrl = localBaseURL;
       }
 
-      const fpPromise = import(`${currentEnv}/fingerprint/pro?apiKey=${apiKey}`).then(async () => {
+      const fpPromise = import(`${baseUrl}/fingerprint/pro?api-key=${apiKey}`).then(async () => {
         const device = new Device();
         return device.load();
       });
