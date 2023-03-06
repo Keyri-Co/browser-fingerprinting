@@ -26,8 +26,6 @@ module.exports = {
   plugins: [
     new WebpackObfuscator({
       rotateStringArray: true,
-      splitStrings: true,
-      selfDefending: true,
       splitStringsChunkLength: 5,
     }),
   ],
