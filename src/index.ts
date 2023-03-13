@@ -5,7 +5,9 @@ import { MaybePromise, suppressUnhandledRejectionWarning, wait } from './utils/a
 import {
   CanvasFingerprint,
   ContrastPreference,
+  Environments,
   FrameSize,
+  IEventParams,
   IGetTouchSupport,
   IGetVideoCardInfo,
   InnerErrorName,
@@ -36,6 +38,7 @@ import {
 } from './utils/browser';
 import { IndexDB } from './utils/idb';
 import { chromePrivateTest, firefoxPrivateTest, msiePrivateTest, safariPrivateTest } from './utils/incognito-browser-tests';
+import { FingerprintApi } from './pro-api';
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
 const isNode = new Function('try {return this===global;}catch(e){return false;}');
@@ -106,8 +109,11 @@ export class Device {
   private dbName: string = this.unknownStringValue;
   private storeName: string = this.unknownStringValue;
   private cryptoKeyId: string = this.unknownStringValue;
-  constructor() {
+
+  private api: FingerprintApi | null = null;
+  constructor({ apiKey, environment = Environments.Production }: { apiKey?: string; environment?: Environments } = {}) {
     this.hash = x64hash128;
+    if (apiKey) this.api = new FingerprintApi({ apiKey, environment });
 
     const isScriptRunnedInBrowser = isBrowser();
     if (!isScriptRunnedInBrowser) return;
@@ -167,6 +173,35 @@ export class Device {
     this.audioContext = paramToString(this.getAudioContextProperties());
     this.frequencyAnalyserProperties = paramToString(this.getFrequencyAnalyserProperties());
     this.supportedVideoFormats = paramToString(this.getSupportedVideoFormats());
+  }
+
+  public async me() {
+    if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
+    const cryptocookie = await this.initCryptoCookie();
+    const devicehash = this.createFingerprintHash();
+
+    const { data: existedDevice } = await this.api?.getKnownDeviceData(devicehash, cryptocookie);
+
+    if (existedDevice && existedDevice.tlsFingerprint) return { ...existedDevice, existedUser: true };
+
+    const { data: newDevice } = await this.addDevice();
+    return { ...newDevice, existedUser: false };
+  }
+
+  public async generateEvent(eventParams: IEventParams) {
+    if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
+    const cryptocookie = await this.initCryptoCookie();
+    const devicehash = this.createFingerprintHash();
+
+    return this.api.createEvent(eventParams, { devicehash, cryptocookie });
+  }
+
+  public async addDevice() {
+    if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
+    const cryptocookie = await this.initCryptoCookie();
+    const devicehash = this.createFingerprintHash();
+
+    return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
   }
 
   private getConnectionParams(navigator: any): { downlink?: number; effectiveType?: string; rtt?: number } {
@@ -247,7 +282,7 @@ export class Device {
         sampleRate: audioCtx.sampleRate,
         state: audioCtx.state,
       };
-    } catch (err: any)  {
+    } catch (err: any) {
       console.error('Audio Context Properties error: ', err.message);
       return {};
     }
@@ -387,7 +422,7 @@ export class Device {
           resolve(true);
         }
         resolve(false);
-      }
+      };
       if (document.readyState === 'interactive' || document.readyState === 'complete') return callback();
       window.addEventListener('load', callback);
     });
@@ -440,8 +475,8 @@ export class Device {
 
   async initCryptoCookie() {
     try {
-      const isScriptRunnedInBrowser = isBrowser();
-      if (!isScriptRunnedInBrowser || !this.db) return;
+      if (!isBrowser()) return '';
+      if (!this.db) throw new Error('DB wasn`t initialized');
 
       const preCachedKey = await this.getPreCachedCryptoCookie();
       if (preCachedKey) {
