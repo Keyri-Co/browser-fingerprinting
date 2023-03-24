@@ -1,3 +1,62 @@
+export interface IEventParams {
+  eventType: FingerprintLogEvents;
+  eventResult: FingerprintLogResult;
+  signals?: Array<FingerprintSignals>;
+  userEmail?: string;
+  userId?: string;
+}
+
+export enum FingerprintLogResult {
+  Success = 'success',
+  Fail = 'fail',
+  NotFinished = 'not_finished',
+}
+
+export enum FingerprintSignals {
+  MultipleAccountSignups = 'multiple_account_signups',
+  NewDeviceType = 'new_device_type',
+  MultipleAccountAccessPerDevice = 'multiple_account_access_per_device',
+  SuspiciousIP = 'suspicious_ip',
+  VpnProxy = 'vpn_proxy',
+  TOR = 'tor',
+  ImprobableTravel = 'improbable_travel',
+  NewIPCountry = 'new_ip_country',
+  MaxEventsPerTimeframe = 'max_events_per_timeframe',
+  EmulatorDetection = 'emulator_detection',
+  JailbrokenRooted = 'jailbroken_rooted',
+  SwizzlingDetected = 'swizzling_detected',
+  TamperingDetected = 'tampering_detected',
+  Debuggable = 'debuggable',
+  DangerousApps = 'dangerous_apps',
+  MaliciousPackages = 'malicious_packages',
+  NewCountry = 'new_country',
+  BotDetection = 'bot_detection',
+  HeadlessBrowser = 'headless_browser',
+  BlockedDevice = 'blocked_device',
+  BlockedEmail = 'blocked_email',
+}
+
+export enum FingerprintLogEvents {
+  RegisterDevice = 'register_device',
+  Visits = 'visits',
+  Login = 'login',
+  Signup = 'signup',
+  AttachNewDevice = 'attach_new_device',
+  EmailChange = 'email_change',
+  ProfileUpdate = 'profile_update',
+  PasswordReset = 'password_reset',
+  Withdrawal = 'withdrawal',
+  Deposit = 'deposit',
+  Purchase = 'purchase',
+}
+
+export enum Environments {
+  Local = 'local',
+  Development = 'development',
+  Staging = 'staging',
+  Production = 'production',
+}
+
 export type WritableCSSProperties = {
   [K in keyof CSSStyleDeclaration]: CSSStyleDeclaration[K] extends string ? K : never;
 }[Extract<keyof CSSStyleDeclaration, string>];
@@ -6,7 +65,7 @@ export type WritableCSSStyles = Partial<Pick<CSSStyleDeclaration, WritableCSSPro
 
 export type Preset = [style?: WritableCSSStyles, text?: string];
 
-export type FrameSize = [number | null, number | null, number | null, number | null]
+export type FrameSize = [number | null, number | null, number | null, number | null];
 export interface IGetVideoCardInfo {
   vendor?: string;
   renderer?: string;
