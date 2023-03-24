@@ -111,6 +111,7 @@ export class Device {
   private cryptoKeyId: string = this.unknownStringValue;
 
   private api: FingerprintApi | null = null;
+  public cloudDevice: Record<any, any> | null = null;
   constructor({ apiKey, environment = Environments.Production }: { apiKey?: string; environment?: Environments } = {}) {
     this.hash = x64hash128;
     if (apiKey) this.api = new FingerprintApi({ apiKey, environment });
@@ -182,10 +183,7 @@ export class Device {
 
     const { data: existedDevice } = await this.api?.getKnownDeviceData(devicehash, cryptocookie);
 
-    if (existedDevice && existedDevice.tlsFingerprint) return { ...existedDevice, existedUser: true };
-
-    const { data: newDevice } = await this.addDevice();
-    return { ...newDevice, existedUser: false };
+    return existedDevice;
   }
 
   public async generateEvent(eventParams: IEventParams) {
@@ -196,12 +194,19 @@ export class Device {
     return this.api.createEvent(eventParams, { devicehash, cryptocookie });
   }
 
-  public async addDevice() {
-    if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
-    const cryptocookie = await this.initCryptoCookie();
-    const devicehash = this.createFingerprintHash();
+  public async synchronizeDevice(): Promise<Record<any, any> | null> {
+    try {
+      if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
+      const cryptocookie = await this.initCryptoCookie();
+      const devicehash = this.createFingerprintHash();
 
-    return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+
+      return device;
+    } catch (err: any) {
+      console.error('Error adding new cloud device: ', err.message);
+      return null;
+    }
   }
 
   private getConnectionParams(navigator: any): { downlink?: number; effectiveType?: string; rtt?: number } {
@@ -542,6 +547,10 @@ export class Device {
       this.fontPreferences = paramToString(fontPreferences);
       this.audioFingerprint = paramToString(audioFingerprint);
       this.screenFrame = paramToString(screenFrame);
+
+      if (this.api) {
+        this.cloudDevice = await this.synchronizeDevice();
+      }
       return this;
     } catch (err: any) {
       console.error(`Error load async params: ${err.message}`);
