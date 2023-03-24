@@ -513,49 +513,54 @@ export class Device {
     }
   }
 
+  private loadResult: Promise<any> | null = null;
   async load() {
-    try {
-      const storeName = this.storeName;
-      const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, adBlockers, browserPermissions, battery, ...other] =
-        await Promise.all([
-          this.getFonts(),
-          this.getDomBlockers(),
-          this.getFontPreferences(),
-          this.getAudioFingerprint(),
-          this.getRoundedScreenFrame(),
-          this.isIncognitoMode(),
-          this.adBlockUsing(),
-          this.getBrowserPermissions(),
-          this.getBatteryInfo(),
-          this.db
-            ?.connect(this.dbName, 1, function (this, event) {
-              let db = this.result;
-              if (!db.objectStoreNames.contains(storeName)) {
-                db.createObjectStore(storeName, { keyPath: 'id' });
-              }
-            })
-            .catch((err) => {
-              console.error('IndexDB not allowed in private mode: ', err.message);
-            }),
-        ]);
-      this.battery = paramToString(battery);
-      this.browserPermissions = paramToString(browserPermissions);
-      this.adBlockers = paramToString(adBlockers);
-      this.isPrivate = paramToString(incognitoMode.isIncognito);
-      this.fonts = paramToString(fonts);
-      this.domBlockers = paramToString(domBlockers);
-      this.fontPreferences = paramToString(fontPreferences);
-      this.audioFingerprint = paramToString(audioFingerprint);
-      this.screenFrame = paramToString(screenFrame);
+    const internalCall = async () => {
+      try {
+        const storeName = this.storeName;
+        const [fonts, domBlockers, fontPreferences, audioFingerprint, screenFrame, incognitoMode, adBlockers, browserPermissions, battery, ...other] =
+          await Promise.all([
+            this.getFonts(),
+            this.getDomBlockers(),
+            this.getFontPreferences(),
+            this.getAudioFingerprint(),
+            this.getRoundedScreenFrame(),
+            this.isIncognitoMode(),
+            this.adBlockUsing(),
+            this.getBrowserPermissions(),
+            this.getBatteryInfo(),
+            this.db
+              ?.connect(this.dbName, 1, function (this, event) {
+                let db = this.result;
+                if (!db.objectStoreNames.contains(storeName)) {
+                  db.createObjectStore(storeName, { keyPath: 'id' });
+                }
+              })
+              .catch((err) => {
+                console.error('IndexDB not allowed in private mode: ', err.message);
+              }),
+          ]);
+        this.battery = paramToString(battery);
+        this.browserPermissions = paramToString(browserPermissions);
+        this.adBlockers = paramToString(adBlockers);
+        this.isPrivate = paramToString(incognitoMode.isIncognito);
+        this.fonts = paramToString(fonts);
+        this.domBlockers = paramToString(domBlockers);
+        this.fontPreferences = paramToString(fontPreferences);
+        this.audioFingerprint = paramToString(audioFingerprint);
+        this.screenFrame = paramToString(screenFrame);
 
-      if (this.api) {
-        this.cloudDevice = await this.synchronizeDevice();
+        if (this.api) {
+          this.cloudDevice = await this.synchronizeDevice();
+        }
+        return this;
+      } catch (err: any) {
+        console.error(`Error load async params: ${err.message}`);
+        return this;
       }
-      return this;
-    } catch (err: any) {
-      console.error(`Error load async params: ${err.message}`);
-      return this;
     }
+    if (!this.loadResult) this.loadResult = internalCall();
+    return this.loadResult;
   }
 
   createFingerprintHash(): string {
