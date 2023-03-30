@@ -42,7 +42,7 @@ export class FingerprintApi {
   }
 
   async createEvent(
-    { eventType, eventResult, signals = [], userEmail, userId }: IEventParams,
+    { eventType, eventResult, signals = [], userId }: IEventParams,
     { devicehash, cryptocookie }: { devicehash: string; cryptocookie: string },
   ) {
     const request = await fetch(this.apiLinks.createEvent(), {
@@ -57,7 +57,6 @@ export class FingerprintApi {
         eventType,
         eventResult,
         signals,
-        userEmail,
         userId,
       }),
     });

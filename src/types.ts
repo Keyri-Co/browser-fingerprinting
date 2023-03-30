@@ -2,7 +2,6 @@ export interface IEventParams {
   eventType: FingerprintLogEvents;
   eventResult: FingerprintLogResult;
   signals?: Array<FingerprintSignals>;
-  userEmail?: string;
   userId?: string;
 }
 
