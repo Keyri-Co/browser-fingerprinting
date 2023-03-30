@@ -194,13 +194,13 @@ export class Device {
     return this.api.createEvent(eventParams, { devicehash, cryptocookie });
   }
 
-  public async synchronizeDevice(): Promise<Record<any, any> | null> {
+  public async synchronizeDevice(logger: boolean = true): Promise<Record<any, any> | null> {
     try {
       if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
       const cryptocookie = await this.initCryptoCookie();
       const devicehash = this.createFingerprintHash();
 
-      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash, logger });
 
       return device;
     } catch (err: any) {
@@ -514,7 +514,7 @@ export class Device {
   }
 
   private loadResult: Promise<any> | null = null;
-  async load() {
+  async load(autologger: boolean = true) {
     const internalCall = async () => {
       try {
         const storeName = this.storeName;
@@ -551,14 +551,14 @@ export class Device {
         this.screenFrame = paramToString(screenFrame);
 
         if (this.api) {
-          this.cloudDevice = await this.synchronizeDevice();
+          this.cloudDevice = await this.synchronizeDevice(autologger);
         }
         return this;
       } catch (err: any) {
         console.error(`Error load async params: ${err.message}`);
         return this;
       }
-    }
+    };
     if (!this.loadResult) this.loadResult = internalCall();
     return this.loadResult;
   }
