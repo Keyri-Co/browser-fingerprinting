@@ -9,7 +9,7 @@ export interface IEventParams {
 export enum FingerprintLogResult {
   Success = 'success',
   Fail = 'fail',
-  NotFinished = 'not_finished',
+  Incomplete = 'incomplete',
 }
 
 export enum FingerprintSignals {
@@ -37,7 +37,7 @@ export enum FingerprintSignals {
 }
 
 export enum FingerprintLogEvents {
-  RegisterDevice = 'register_device',
+  Access = 'access',
   Visits = 'visits',
   Login = 'login',
   Signup = 'signup',
