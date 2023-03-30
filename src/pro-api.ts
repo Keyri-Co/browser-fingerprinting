@@ -23,7 +23,7 @@ export class FingerprintApi {
     this.baseLink = this.environmentLinks[environment];
   }
 
-  async addNewDevice({ deviceParams, devicehash, cryptocookie, logger = true }: { deviceParams: Record<string, string>; devicehash: string; cryptocookie: string, logger: boolean }) {
+  async addNewDevice({ deviceParams, devicehash, cryptocookie }: { deviceParams: Record<string, string>; devicehash: string; cryptocookie: string }) {
     const fingerprintData = await fetch(this.apiLinks.newDevice(), {
       method: 'POST',
       headers: {
@@ -34,7 +34,6 @@ export class FingerprintApi {
         devicehash,
         deviceParams,
         cryptocookie,
-        logger,
       }),
     });
 
