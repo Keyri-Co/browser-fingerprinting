@@ -99,7 +99,7 @@
             return data;
           }
 
-          device.me()
+          device.synchronizeDevice()
             .then(async (data) => {
               return setExistUserData(data);
             })
