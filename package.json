@@ -1,6 +1,6 @@
 {
   "name": "keyri-fingerprint",
-  "version": "1.0.24",
+  "version": "1.0.25",
   "description": "Keyri Fingerprint Library",
   "main": "./dist/index.js",
   "scripts": {
