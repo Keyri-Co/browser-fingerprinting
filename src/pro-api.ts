@@ -7,7 +7,7 @@ export class FingerprintApi {
   environmentLinks = {
     [Environments.Local]: 'http://localhost:8000',
     [Environments.Development]: 'https://dev-api.keyri.co',
-    [Environments.Staging]: 'https://stage-api.keyri.co',
+    [Environments.Staging]: 'https://staging.keyri.co',
     [Environments.Production]: 'https://api.keyri.co',
   };
   baseLink: string;
