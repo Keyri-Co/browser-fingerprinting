@@ -1,5 +1,7 @@
 import { Preset } from '../types';
 
+export const proApiPublicKey = 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEO6aCXxDctj+urHBGTGQgfJ9I9euUIPtkLYMfloUqz1m/zUMIY26Ojz97C/o72DtcXh0xEi6gD/W/jIMvaUJEgw==';
+
 export const vendorFlavorKeys = [
   // Blink and some browsers on iOS
   'chrome',

@@ -28,24 +28,41 @@
       const apiKeys = {
         [environments.local]: 'dev_raB7SFWt27VoKqkPhaUrmWAsCJIO8Moj',
         [environments.development]: 'raB7SFWt27VoKqkPhaUrmWAsCJIO8Moj',
-      }
+      };
       const currentEnv = environments.development;
       let apiKey = apiKeys[currentEnv];
+
+      async function decryptData(privateKey, encryptedData) {
+        const { keyriEncryptionPublicKey, salt, iv, encryptedPayload } = encryptedData;
+        const decryptedString = await device.ezCrypto.HKDFDecrypt(privateKey, keyriEncryptionPublicKey, salt, iv, encryptedPayload);
+        const decryptedData = JSON.parse(new TextDecoder().decode(decryptedString));
+        return decryptedData;
+      }
 
       // const fpPromise = import(`${baseUrl}/fingerprint/pro?api-key=${apiKey}`).then(async () => {
       //   const device = new Device();
       //   return device.load();
       // });
 
-      const device = new Device({ apiKey, environment: currentEnv });
+      const device = new Device({
+        apiKey,
+        serviceEncryptionKey: 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEQ4dmvGVHcomITxyko8jbp5L3VwYWDIvj6nYfRfE2Cd8qSJQHlvL9quPDEFwhZSMT79N+3lXgknY455aaOMOZdA==',
+        environment: currentEnv,
+      });
       device
         .load()
         .catch((err) => {
           console.error(err.message);
         })
         .then(async (device) => {
-          const deviceFingerPrint = device.cloudDevice ? device.cloudDevice.fingerprint : device.createFingerprintHash();
-          const cryptocookie = device.cloudDevice ? device.cloudDevice.cryptoCookie : await device.initCryptoCookie().catch((err) => console.log(err.message));
+          await device.generateEvent({ eventType: 'access', eventResult: 'success', userId: 'test' });
+          const servicePrivateKey =
+            'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgK+cXuOknz8XNYaqhKTmMFmIJ2wucpK6Lj6Ypo2A0ji2hRANCAARcRkn5O1DVmFb6f79I6wY/6fMduQzz8tyToVrlEadUZIlV/rPAN1rPrF0wIe35LqJL7gs+Z/TjIr3dfwtPY0iP';
+          const cloudDevice = await decryptData(servicePrivateKey, device.encryptedCloudDevice);
+          const deviceFingerPrint = cloudDevice ? cloudDevice.fingerprint : device.createFingerprintHash();
+          const cryptocookie = cloudDevice
+            ? cloudDevice.cryptoCookie
+            : await device.initCryptoCookie().catch((err) => console.log(err.message));
 
           function printListIntoHTML(itemList, elem) {
             const elemBox = document.getElementById(elem);
@@ -70,7 +87,7 @@
             }
             const fingerprintData = [
               { title: 'User Previously Existed?', value: !data.newDevice },
-              { title: 'TLS Fingerprint', value: data.cloudDevice ? data.cloudDevice.tlsFingerprint : '' },
+              { title: 'TLS Fingerprint', value: cloudDevice ? cloudDevice.tlsFingerprint : '' },
             ];
 
             printListIntoHTML(fingerprintData, 'fingerprint-data');
@@ -99,9 +116,11 @@
             return data;
           }
 
-          device.synchronizeDevice()
+          device
+            .synchronizeDevice()
             .then(async (data) => {
-              return setExistUserData(data);
+              const decryptedData = await decryptData(servicePrivateKey, data);
+              return setExistUserData(decryptedData);
             })
             .catch((err) => {
               const fingerprintData = [{ title: 'User Previously Existed?', value: false }];

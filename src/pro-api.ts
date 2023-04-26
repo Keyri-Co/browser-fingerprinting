@@ -1,7 +1,9 @@
 import { Environments, IEventParams } from './types';
+import { encryptWithFormattedResponse } from './utils/encrypt-flow';
 
 export class FingerprintApi {
   apiKey: string;
+  serviceEncryptionKey: string;
   environment: Environments;
 
   environmentLinks = {
@@ -16,24 +18,42 @@ export class FingerprintApi {
     newDevice: () => `${this.baseLink}/fingerprint/new-device`,
     createEvent: () => `${this.baseLink}/fingerprint/event`,
   };
-  constructor({ apiKey, environment = Environments.Production }: { apiKey: string; environment?: Environments }) {
+  constructor({
+    apiKey,
+    serviceEncryptionKey = '',
+    environment = Environments.Production,
+  }: {
+    apiKey: string;
+    serviceEncryptionKey: string;
+    environment?: Environments;
+  }) {
     this.apiKey = apiKey;
     if (!this.environmentLinks[environment]) throw new Error('Invalid environment type.');
+    this.serviceEncryptionKey = serviceEncryptionKey;
     this.environment = environment;
     this.baseLink = this.environmentLinks[environment];
   }
 
-  async addNewDevice({ deviceParams, devicehash, cryptocookie }: { deviceParams: Record<string, string>; devicehash: string; cryptocookie: string }) {
+  async addNewDevice({ deviceParams, deviceHash, cryptoCookie }: { deviceParams: Record<string, string>; deviceHash: string; cryptoCookie: string }) {
+    if (!this.apiKey || !this.serviceEncryptionKey) throw new Error('Invalid keys');
+    const { ciphertext, publicKey, iv, salt } = await encryptWithFormattedResponse({
+      apiKey: this.apiKey,
+      serviceEncryptionKey: this.serviceEncryptionKey,
+      deviceParams,
+      deviceHash,
+      cryptoCookie,
+    });
+
     const fingerprintData = await fetch(this.apiLinks.newDevice(), {
       method: 'POST',
       headers: {
-        'api-key': this.apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        devicehash,
-        deviceParams,
-        cryptocookie,
+        clientEncryptionKey: publicKey,
+        encryptedPayload: ciphertext,
+        iv,
+        salt,
       }),
     });
 
@@ -42,29 +62,36 @@ export class FingerprintApi {
 
   async createEvent(
     { eventType, eventResult, signals = [], userId }: IEventParams,
-    { devicehash, cryptocookie }: { devicehash: string; cryptocookie: string },
+    { deviceHash, cryptoCookie }: { deviceHash: string; cryptoCookie: string },
   ) {
+    if (!this.apiKey || !this.serviceEncryptionKey) throw new Error('Invalid keys');
+    const { ciphertext, publicKey, iv, salt } = await encryptWithFormattedResponse({
+      apiKey: this.apiKey,
+      serviceEncryptionKey: this.serviceEncryptionKey,
+      eventType,
+      eventResult,
+      signals,
+      userId,
+      deviceHash,
+      cryptoCookie,
+    });
+
     const request = await fetch(this.apiLinks.createEvent(), {
       method: 'POST',
       headers: {
-        'api-key': this.apiKey,
         'Content-Type': 'application/json',
-        devicehash,
-        cryptocookie,
       },
       body: JSON.stringify({
-        eventType,
-        eventResult,
-        signals,
-        userId,
+        clientEncryptionKey: publicKey,
+        encryptedPayload: ciphertext,
+        iv,
+        salt,
       }),
     });
 
     const requestData = await request.json();
 
-    if (!requestData.result) throw new Error(requestData.error.message);
-
-    return requestData.data;
+    return requestData;
   }
 
   async getKnownDeviceData(devicehash: string, cryptocookie: string) {

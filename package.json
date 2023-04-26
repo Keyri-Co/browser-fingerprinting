@@ -1,6 +1,6 @@
 {
   "name": "keyri-fingerprint",
-  "version": "1.0.26",
+  "version": "1.0.27",
   "description": "Keyri Fingerprint Library",
   "main": "./dist/index.js",
   "scripts": {
@@ -32,5 +32,8 @@
   },
   "files": [
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "@justinwwolcott/ez-web-crypto": "^1.2.1"
+  }
 }
