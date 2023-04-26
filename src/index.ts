@@ -39,14 +39,17 @@ import {
 import { IndexDB } from './utils/idb';
 import { chromePrivateTest, firefoxPrivateTest, msiePrivateTest, safariPrivateTest } from './utils/incognito-browser-tests';
 import { FingerprintApi } from './pro-api';
+import EZCrypto from "@justinwwolcott/ez-web-crypto";
 
 const isBrowser = new Function('try {return this===window;}catch(e){ return false;}');
 const isNode = new Function('try {return this===global;}catch(e){return false;}');
 
 export class Device {
+  public ezCrypto: EZCrypto;
   private hash: Function;
   private subtle: SubtleCrypto | undefined;
   private unknownStringValue = defaultStringValue;
+  private fingerprint: string = this.unknownStringValue;
   screenColorDepth: string = this.unknownStringValue;
   colorGamut: string = this.unknownStringValue;
   contrastPreferences: string = this.unknownStringValue;
@@ -111,10 +114,15 @@ export class Device {
   private cryptoKeyId: string = this.unknownStringValue;
 
   private api: FingerprintApi | null = null;
-  public cloudDevice: Record<any, any> | null = null;
-  constructor({ apiKey, environment = Environments.Production }: { apiKey?: string; environment?: Environments } = {}) {
+  public encryptedCloudDevice: Record<any, any> | null = null;
+  constructor({
+    apiKey,
+    serviceEncryptionKey,
+    environment = Environments.Production,
+  }: { apiKey?: string; serviceEncryptionKey?: string; environment?: Environments } = {}) {
     this.hash = x64hash128;
-    if (apiKey) this.api = new FingerprintApi({ apiKey, environment });
+    this.ezCrypto = new EZCrypto();
+    if (apiKey && serviceEncryptionKey) this.api = new FingerprintApi({ apiKey, serviceEncryptionKey, environment });
 
     const isScriptRunnedInBrowser = isBrowser();
     if (!isScriptRunnedInBrowser) return;
@@ -188,21 +196,19 @@ export class Device {
 
   public async generateEvent(eventParams: IEventParams) {
     if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
-    const cryptocookie = await this.initCryptoCookie();
-    const devicehash = this.createFingerprintHash();
+    const cryptoCookie = await this.initCryptoCookie();
+    const deviceHash = this.createFingerprintHash();
 
-    return this.api.createEvent(eventParams, { devicehash, cryptocookie });
+    return this.api.createEvent(eventParams, { deviceHash, cryptoCookie });
   }
 
   public async synchronizeDevice(): Promise<Record<any, any> | null> {
     try {
       if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
-      const cryptocookie = await this.initCryptoCookie();
-      const devicehash = this.createFingerprintHash();
+      const cryptoCookie = await this.initCryptoCookie();
+      const deviceHash = this.createFingerprintHash();
 
-      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
-
-      return device;
+      return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptoCookie, deviceHash });
     } catch (err: any) {
       console.error('Error adding new cloud device: ', err.message);
       return null;
@@ -551,7 +557,7 @@ export class Device {
         this.screenFrame = paramToString(screenFrame);
 
         if (this.api) {
-          this.cloudDevice = await this.synchronizeDevice();
+          this.encryptedCloudDevice = await this.synchronizeDevice();
         }
         return this;
       } catch (err: any) {
@@ -564,8 +570,10 @@ export class Device {
   }
 
   createFingerprintHash(): string {
+    if (this.fingerprint !== this.unknownStringValue) return this.fingerprint;
     const nonHashedString = objectToCanonicalString(this.getMainParams());
     const hash = this.hash(nonHashedString);
+    this.fingerprint = hash;
     return hash;
   }
 
