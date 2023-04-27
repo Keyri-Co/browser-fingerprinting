@@ -208,7 +208,9 @@ export class Device {
       const cryptocookie = await this.initCryptoCookie();
       const devicehash = this.createFingerprintHash();
 
-      return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+
+      return device;
     } catch (err: any) {
       console.error('Error adding new cloud device: ', err.message);
       return null;
