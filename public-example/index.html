@@ -32,13 +32,6 @@
       const currentEnv = environments.development;
       let apiKey = apiKeys[currentEnv];
 
-      async function decryptData(privateKey, encryptedData) {
-        const { keyriEncryptionPublicKey, salt, iv, encryptedPayload } = encryptedData;
-        const decryptedString = await device.ezCrypto.HKDFDecrypt(privateKey, keyriEncryptionPublicKey, salt, iv, encryptedPayload);
-        const decryptedData = JSON.parse(new TextDecoder().decode(decryptedString));
-        return decryptedData;
-      }
-
       // const fpPromise = import(`${baseUrl}/fingerprint/pro?api-key=${apiKey}`).then(async () => {
       //   const device = new Device();
       //   return device.load();
@@ -58,10 +51,9 @@
           await device.generateEvent({ eventType: 'access', eventResult: 'success', userId: 'test' });
           const servicePrivateKey =
             'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgK+cXuOknz8XNYaqhKTmMFmIJ2wucpK6Lj6Ypo2A0ji2hRANCAARcRkn5O1DVmFb6f79I6wY/6fMduQzz8tyToVrlEadUZIlV/rPAN1rPrF0wIe35LqJL7gs+Z/TjIr3dfwtPY0iP';
-          const cloudDevice = await decryptData(servicePrivateKey, device.encryptedCloudDevice);
-          const deviceFingerPrint = cloudDevice ? cloudDevice.fingerprint : device.createFingerprintHash();
-          const cryptocookie = cloudDevice
-            ? cloudDevice.cryptoCookie
+          const deviceFingerPrint = this.cloudDevice ? this.cloudDevice.fingerprint : device.createFingerprintHash();
+          const cryptocookie = this.cloudDevice
+            ? this.cloudDevice.cryptoCookie
             : await device.initCryptoCookie().catch((err) => console.log(err.message));
 
           function printListIntoHTML(itemList, elem) {
@@ -87,7 +79,7 @@
             }
             const fingerprintData = [
               { title: 'User Previously Existed?', value: !data.newDevice },
-              { title: 'TLS Fingerprint', value: cloudDevice ? cloudDevice.tlsFingerprint : '' },
+              { title: 'TLS Fingerprint', value: this.cloudDevice ? this.cloudDevice.tlsFingerprint : '' },
             ];
 
             printListIntoHTML(fingerprintData, 'fingerprint-data');
@@ -117,10 +109,9 @@
           }
 
           device
-            .synchronizeDevice()
+            .me()
             .then(async (data) => {
-              const decryptedData = await decryptData(servicePrivateKey, data);
-              return setExistUserData(decryptedData);
+              return setExistUserData(data);
             })
             .catch((err) => {
               const fingerprintData = [{ title: 'User Previously Existed?', value: false }];

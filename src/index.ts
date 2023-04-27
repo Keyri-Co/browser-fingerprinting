@@ -114,7 +114,7 @@ export class Device {
   private cryptoKeyId: string = this.unknownStringValue;
 
   private api: FingerprintApi | null = null;
-  public encryptedCloudDevice: Record<any, any> | null = null;
+  public cloudDevice: Record<any, any> | null = null;
   constructor({
     apiKey,
     serviceEncryptionKey,
@@ -205,10 +205,12 @@ export class Device {
   public async synchronizeDevice(): Promise<Record<any, any> | null> {
     try {
       if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
-      const cryptoCookie = await this.initCryptoCookie();
-      const deviceHash = this.createFingerprintHash();
+      const cryptocookie = await this.initCryptoCookie();
+      const devicehash = this.createFingerprintHash();
 
-      return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptoCookie, deviceHash });
+      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+
+      return device;
     } catch (err: any) {
       console.error('Error adding new cloud device: ', err.message);
       return null;
@@ -557,7 +559,7 @@ export class Device {
         this.screenFrame = paramToString(screenFrame);
 
         if (this.api) {
-          this.encryptedCloudDevice = await this.synchronizeDevice();
+          this.cloudDevice = await this.synchronizeDevice();
         }
         return this;
       } catch (err: any) {
