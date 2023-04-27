@@ -114,7 +114,7 @@ export class Device {
   private cryptoKeyId: string = this.unknownStringValue;
 
   private api: FingerprintApi | null = null;
-  public encryptedCloudDevice: Record<any, any> | null = null;
+  public cloudDevice: Record<any, any> | null = null;
   constructor({
     apiKey,
     serviceEncryptionKey,
@@ -557,7 +557,7 @@ export class Device {
         this.screenFrame = paramToString(screenFrame);
 
         if (this.api) {
-          this.encryptedCloudDevice = await this.synchronizeDevice();
+          this.cloudDevice = await this.synchronizeDevice();
         }
         return this;
       } catch (err: any) {

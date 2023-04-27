@@ -58,10 +58,9 @@
           await device.generateEvent({ eventType: 'access', eventResult: 'success', userId: 'test' });
           const servicePrivateKey =
             'MIGHAgEAMBMGByqGSM49AgEGCCqGSM49AwEHBG0wawIBAQQgK+cXuOknz8XNYaqhKTmMFmIJ2wucpK6Lj6Ypo2A0ji2hRANCAARcRkn5O1DVmFb6f79I6wY/6fMduQzz8tyToVrlEadUZIlV/rPAN1rPrF0wIe35LqJL7gs+Z/TjIr3dfwtPY0iP';
-          const cloudDevice = await decryptData(servicePrivateKey, device.encryptedCloudDevice);
-          const deviceFingerPrint = cloudDevice ? cloudDevice.fingerprint : device.createFingerprintHash();
-          const cryptocookie = cloudDevice
-            ? cloudDevice.cryptoCookie
+          const deviceFingerPrint = this.cloudDevice ? this.cloudDevice.fingerprint : device.createFingerprintHash();
+          const cryptocookie = this.cloudDevice
+            ? this.cloudDevice.cryptoCookie
             : await device.initCryptoCookie().catch((err) => console.log(err.message));
 
           function printListIntoHTML(itemList, elem) {
@@ -87,7 +86,7 @@
             }
             const fingerprintData = [
               { title: 'User Previously Existed?', value: !data.newDevice },
-              { title: 'TLS Fingerprint', value: cloudDevice ? cloudDevice.tlsFingerprint : '' },
+              { title: 'TLS Fingerprint', value: this.cloudDevice ? this.cloudDevice.tlsFingerprint : '' },
             ];
 
             printListIntoHTML(fingerprintData, 'fingerprint-data');
