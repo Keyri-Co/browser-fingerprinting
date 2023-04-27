@@ -205,10 +205,10 @@ export class Device {
   public async synchronizeDevice(): Promise<Record<any, any> | null> {
     try {
       if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
-      const cryptoCookie = await this.initCryptoCookie();
-      const deviceHash = this.createFingerprintHash();
+      const cryptocookie = await this.initCryptoCookie();
+      const devicehash = this.createFingerprintHash();
 
-      return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptoCookie, deviceHash });
+      return this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
     } catch (err: any) {
       console.error('Error adding new cloud device: ', err.message);
       return null;

@@ -34,26 +34,17 @@ export class FingerprintApi {
     this.baseLink = this.environmentLinks[environment];
   }
 
-  async addNewDevice({ deviceParams, deviceHash, cryptoCookie }: { deviceParams: Record<string, string>; deviceHash: string; cryptoCookie: string }) {
-    if (!this.apiKey || !this.serviceEncryptionKey) throw new Error('Invalid keys');
-    const { ciphertext, publicKey, iv, salt } = await encryptWithFormattedResponse({
-      apiKey: this.apiKey,
-      serviceEncryptionKey: this.serviceEncryptionKey,
-      deviceParams,
-      deviceHash,
-      cryptoCookie,
-    });
-
+  async addNewDevice({ deviceParams, devicehash, cryptocookie }: { deviceParams: Record<string, string>; devicehash: string; cryptocookie: string }) {
     const fingerprintData = await fetch(this.apiLinks.newDevice(), {
       method: 'POST',
       headers: {
+        'api-key': this.apiKey,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        clientEncryptionKey: publicKey,
-        encryptedPayload: ciphertext,
-        iv,
-        salt,
+        devicehash,
+        deviceParams,
+        cryptocookie,
       }),
     });
 
