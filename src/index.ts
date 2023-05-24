@@ -206,9 +206,9 @@ export class Device {
     try {
       if (!this.api) throw new Error('Configure api-key for using all functionality of Keyri Fingerprint');
       const cryptocookie = await this.initCryptoCookie();
-      const devicehash = this.createFingerprintHash();
+      const deviceHash = this.createFingerprintHash();
 
-      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, devicehash });
+      const { data: device } = await this.api.addNewDevice({ deviceParams: this.getMainParams(), cryptocookie, deviceHash });
 
       return device;
     } catch (err: any) {
