@@ -79,7 +79,7 @@
             }
             const fingerprintData = [
               { title: 'User Previously Existed?', value: !data.newDevice },
-              { title: 'TLS Fingerprint', value: this.cloudDevice ? this.cloudDevice.tlsFingerprint : '' },
+              { title: 'TLS Fingerprint', value: device.cloudDevice ? device.cloudDevice.tlsFingerprint : '' },
             ];
 
             printListIntoHTML(fingerprintData, 'fingerprint-data');
