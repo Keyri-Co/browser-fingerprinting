@@ -64,10 +64,12 @@ You can initialize Device instance with next params:
 import { Device } from 'keyri-fingerprint';
 import { Environments } from './types';
 
-const device: Device = new Device({ apiKey: YOUR_PUBLIC_API_KEY, environment: 'production' });
+const device: Device = new Device({ apiKey: YOUR_PUBLIC_API_KEY, serviceEncryptionKey: ECDH_PUBLIC_KEY, environment: 'production' });
 ```
 
 You can find `apiKey` in Keyri Dashboard after you create new service. It give you possibility to use pro-version of library and create custom events, analyze devices signals etc.
+
+If you want use pro-version functionality - you need generate ECDH keypair and provide you public key to `Device` initializer.
 
 `environment` is optional field which can configure which environment back-end of Keyri you want to use.
 
@@ -184,7 +186,7 @@ console.log(JSON.stringify(deviceMainParams));
 ```ts
 import { Device } from 'keyri-fingerprint';
 
-const device: Device = new Device({ apiKey: 'PUBLIC_API_KEY' });
+const device: Device = new Device({ apiKey: 'PUBLIC_API_KEY', serviceEncryptionKey: 'ECDH_PUBLIC_KEY' });
 await device.load();
 
 const backEndDeviceResponse: Record<string, string> = await device.me();
@@ -446,7 +448,7 @@ console.log(JSON.stringify(backEndDeviceResponse));
 ```ts
 import { Device } from 'keyri-fingerprint';
 
-const device: Device = new Device({ apiKey: 'PUBLIC_API_KEY' });
+const device: Device = new Device({ apiKey: 'PUBLIC_API_KEY', serviceEncryptionKey: 'ECDH_PUBLIC_KEY' });
 await device.load();
 
 const newEvent: Record<string, string> = await device.generateEvent({ eventType: 'visits', eventResult: 'success' });
